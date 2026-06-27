@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Body Injury Assessment</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f0f12;color:#e8e6e0;min-height:100vh}
+.app{max-width:520px;margin:0 auto;padding:14px 14px 40px}
+h1{font-size:17px;font-weight:500;margin-bottom:2px}
+.sub{font-size:12px;color:#555;margin-bottom:14px}
+
+/* Viewer */
+#viewer{width:100%;height:420px;border-radius:14px;overflow:hidden;background:#141418;border:0.5px solid #252528;position:relative;margin-bottom:10px}
+#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#4a8aff;font-size:13px;z-index:5;background:#141418}
+.spin{width:28px;height:28px;border:2px solid #1a2a40;border-top-color:#4a8aff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#pinLayer{position:absolute;inset:0;pointer-events:none;z-index:4}
+.pm{position:absolute;transform:translate(-50%,-50%);pointer-events:none}
+.pc{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.6)}
+
+/* Region selector */
+#regionBar{display:none;margin-bottom:10px}
+.region-title{font-size:11px;color:#555;margin-bottom:6px}
+.region-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+.rb{padding:8px 4px;text-align:center;font-size:11px;border-radius:7px;border:0.5px solid #252528;background:#161618;color:#555;cursor:pointer;transition:.15s;line-height:1.3}
+.rb .ri{font-size:14px;display:block;margin-bottom:2px}
+.rb.on{background:#1a2a40;border-color:#2a4a70;color:#7ab3ff}
+.rb:hover{border-color:#3a4a60;color:#8a9ab0}
+
+/* Back button */
+#backBtn{display:none;margin-bottom:10px;padding:7px 14px;font-size:12px;border-radius:8px;border:0.5px solid #252528;background:#161618;color:#7ab3ff;cursor:pointer}
+
+/* Controls panel */
+#ctrlPanel{display:none}
+.hint{text-align:center;font-size:11px;color:#333;margin-bottom:10px}
+.row{display:flex;gap:5px;margin-bottom:10px}
+.rbtn{flex:1;padding:7px;text-align:center;font-size:12px;border-radius:8px;border:0.5px solid #252528;background:#161618;color:#555;cursor:pointer}
+.rbtn.on{background:#1a2a3a;border-color:#2a4060;color:#7ab3ff}
+.xrow{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:#161618;border:0.5px solid #222;border-radius:9px;margin-bottom:8px}
+.tog{position:relative;width:36px;height:20px;cursor:pointer}
+.tog-tr{position:absolute;inset:0;background:#252528;border-radius:10px;transition:.25s}
+.tog-th{position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:.25s}
+.ctrl{background:#161618;border:0.5px solid #222;border-radius:9px;padding:11px 13px;margin-bottom:8px}
+.cl{font-size:11px;color:#555;margin-bottom:5px;display:flex;justify-content:space-between}
+.cl span{color:#7ab3ff}
+input[type=range]{width:100%;-webkit-appearance:none;height:3px;border-radius:2px;background:#252528;outline:none;display:block;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#4a8aff;cursor:pointer}
+.mgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:10px}
+.mb{padding:8px 4px;text-align:center;font-size:11px;border-radius:7px;border:0.5px solid #252528;background:#161618;color:#555;cursor:pointer;line-height:1.3}
+.mb.on{background:#1a2a40;border-color:#2a4a70;color:#7ab3ff}
+.mb .ic{font-size:13px;display:block;margin-bottom:2px}
+
+/* Pins */
+.pi{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#161618;border:0.5px solid #222;border-radius:7px;margin-bottom:4px}
+.pd{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.ptxt{flex:1;font-size:12px;color:#aaa;line-height:1.4}
+.pmeta{font-size:10px;color:#444}
+.px{color:#333;cursor:pointer;font-size:16px;padding:0 3px;line-height:1}
+.px:hover{color:#ff6b6b}
+
+/* Popup */
+.popup{position:absolute;background:#1e1e28;border:0.5px solid #2a2a42;border-radius:12px;padding:13px;z-index:30;width:190px;box-shadow:0 10px 40px rgba(0,0,0,.9)}
+.popup h3{font-size:12px;font-weight:500;color:#bbb;margin-bottom:8px}
+.sn{font-size:28px;font-weight:500;text-align:center;margin-bottom:2px}
+.sw{font-size:10px;text-align:center;color:#444;margin-bottom:7px}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:8px}
+.tc{padding:5px;text-align:center;font-size:10px;border-radius:5px;border:0.5px solid #2a2a3a;background:#141420;color:#666;cursor:pointer}
+.tc.on{background:#1a2a40;border-color:#2a5aaa;color:#7ab3ff}
+.pbs{display:flex;gap:5px}
+.pb{flex:1;padding:6px;font-size:11px;border-radius:6px;border:0.5px solid #2a2a3a;background:#141420;color:#888;cursor:pointer}
+.pb.ok{background:#1a2a40;border-color:#2a5aaa;color:#7ab3ff}
+
+/* Assess */
+.go{width:100%;padding:12px;font-size:14px;font-weight:500;border-radius:10px;border:0.5px solid #2a5aaa;background:#1a2a40;color:#7ab3ff;cursor:pointer;margin-bottom:10px}
+.go:disabled{opacity:.3;cursor:not-allowed}
+.summ{background:#161618;border:0.5px solid #222;border-radius:12px;padding:16px;margin-top:4px}
+.summ h2{font-size:15px;font-weight:500;margin-bottom:10px}
+.ov{font-size:13px;line-height:1.7;color:#bbb;margin-bottom:12px}
+.urg{border-radius:8px;padding:9px 12px;margin-bottom:12px}
+.ut{font-size:13px;font-weight:500}
+.ur{font-size:12px;margin-top:3px;opacity:.8}
+.sh{font-size:10px;color:#444;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.ic2{background:#111114;border:0.5px solid #1e1e22;border-radius:7px;padding:9px 11px;margin-bottom:5px}
+.iname{font-size:13px;font-weight:500;margin-bottom:2px}
+.idesc{font-size:11px;color:#555;line-height:1.5}
+.tip{display:flex;gap:7px;margin-bottom:5px;font-size:12px;color:#888;line-height:1.5}
+.disc{font-size:10px;color:#333;border-top:0.5px solid #1e1e22;padding-top:10px;font-style:italic;line-height:1.5;margin-top:10px}
+.ltxt{text-align:center;padding:24px;color:#4a8aff;font-size:13px}
+.rst{width:100%;padding:9px;font-size:12px;border-radius:8px;border:0.5px solid #222;background:transparent;color:#444;cursor:pointer;margin-top:10px}
+
+/* Region label overlay */
+#regionLabel{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(20,20,28,.85);border:0.5px solid #2a2a40;border-radius:20px;padding:5px 14px;font-size:12px;color:#7ab3ff;pointer-events:none;z-index:6;display:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Body Injury Assessment</h1>
+  <p class="sub" id="mainSub">Rotate the body · tap a region to assess it</p>
+
+  <div id="viewer">
+    <div id="overlay"><div class="spin"></div><span id="loadTxt">Loading model…</span></div>
+    <div id="pinLayer"></div>
+    <div class="popup" id="pop" style="display:none"></div>
+    <div id="regionLabel"></div>
+  </div>
+
+  <!-- Step 1: region selector -->
+  <div id="regionBar">
+    <div class="region-title">Select the injured area</div>
+    <div class="region-grid">
+      <div class="rb" onclick="selectRegion('wrist_r')"><span class="ri">🖐</span>R. Wrist</div>
+      <div class="rb" onclick="selectRegion('wrist_l')"><span class="ri">🖐</span>L. Wrist</div>
+      <div class="rb" onclick="selectRegion('elbow_r')"><span class="ri">💪</span>R. Elbow</div>
+      <div class="rb" onclick="selectRegion('elbow_l')"><span class="ri">💪</span>L. Elbow</div>
+      <div class="rb" onclick="selectRegion('shoulder_r')"><span class="ri">🦾</span>R. Shoulder</div>
+      <div class="rb" onclick="selectRegion('shoulder_l')"><span class="ri">🦾</span>L. Shoulder</div>
+      <div class="rb" onclick="selectRegion('knee_r')"><span class="ri">🦵</span>R. Knee</div>
+      <div class="rb" onclick="selectRegion('knee_l')"><span class="ri">🦵</span>L. Knee</div>
+      <div class="rb" onclick="selectRegion('ankle_r')"><span class="ri">🦶</span>R. Ankle</div>
+      <div class="rb" onclick="selectRegion('ankle_l')"><span class="ri">🦶</span>L. Ankle</div>
+      <div class="rb" onclick="selectRegion('back')"><span class="ri">🫀</span>Back</div>
+      <div class="rb" onclick="selectRegion('neck')"><span class="ri">🧠</span>Neck</div>
+    </div>
+  </div>
+
+  <!-- Back button -->
+  <button id="backBtn" onclick="goBack()">← Back to full body</button>
+
+  <!-- Step 2: assessment controls -->
+  <div id="ctrlPanel">
+    <p class="hint">Drag to rotate · Switch to Pain mode to mark</p>
+    <div class="row">
+      <div class="rbtn on" id="btnRotate" onclick="setMode('rotate')">🔄 Rotate</div>
+      <div class="rbtn" id="btnPain" onclick="setMode('pain')">📍 Mark Pain</div>
+    </div>
+    <div class="xrow">
+      <span style="font-size:13px;color:#888">🦴 X-ray view</span>
+      <div class="tog" onclick="toggleXray()">
+        <div class="tog-tr" id="togTr"></div>
+        <div class="tog-th" id="togTh"></div>
+      </div>
+    </div>
+    <div class="ctrl" id="ctrl1" style="display:none">
+      <div class="cl" id="ctrl1Lbl">Motion A <span id="ctrl1Val">Neutral</span></div>
+      <input type="range" id="ctrl1Slider" min="-100" max="100" value="0" oninput="onCtrl1(+this.value)">
+    </div>
+    <div class="ctrl" id="ctrl2" style="display:none">
+      <div class="cl" id="ctrl2Lbl">Motion B <span id="ctrl2Val">Neutral</span></div>
+      <input type="range" id="ctrl2Slider" min="0" max="100" value="0" oninput="onCtrl2(+this.value)">
+    </div>
+    <div style="font-size:11px;color:#555;margin-bottom:6px" id="motionTitle">Which motions cause pain?</div>
+    <div class="mgrid" id="motionGrid"></div>
+    <div id="pinsSec" style="display:none;margin-bottom:10px">
+      <div id="pinsLbl" style="font-size:11px;color:#555;margin-bottom:6px"></div>
+      <div id="pinsList"></div>
+    </div>
+    <button class="go" id="goBtn" disabled onclick="runAssessment()">Generate assessment →</button>
+    <div id="summArea"></div>
+  </div>
+</div>
+
+<script src="three.min.js"></script>
+<script src="GLTFLoader.js"></script>
+<script>
+const MODEL_URL = 'male_base_mesh_rigged_metahuman_ue5.glb';
+const COLS  = ['#ff5f5f','#ff9f5f','#ffd45f','#5fffaa','#5fbaff','#c05fff','#ff5fbe'];
+const TYPES = ['Sharp','Aching','Throbbing','Burning','Numb','Stiff'];
+const SEVW  = ['','Very mild','Mild','Mild','Moderate','Moderate','Moderate','Significant','Significant','Severe','Extreme'];
+
+// Metahuman standard bone names per region
+const REGIONS = {
+  wrist_r:    { label:'Right Wrist & Hand', cam:{x:0.35,y:0.9,z:0.5}, target:{x:0.35,y:0.9,z:0}, bones:{flex:'lowerarm_r',fingers:['index','middle','ring','pinky','thumb'],side:'_r'}, motions:['Flexion','Extension','Radial dev.','Ulnar dev.','Grip','Rotation'], ctrl1:{label:'Wrist flex',min:-100,max:100,bones:['hand_r'],axis:'x',scale:0.42}, ctrl2:{label:'Grip',min:0,max:100,bones:['index_01_r','middle_01_r','ring_01_r','pinky_01_r','index_02_r','middle_02_r','ring_02_r','pinky_02_r','index_03_r','middle_03_r','ring_03_r','pinky_03_r'],axis:'x',scale:0.7} },
+  wrist_l:    { label:'Left Wrist & Hand',  cam:{x:-0.35,y:0.9,z:0.5}, target:{x:-0.35,y:0.9,z:0}, motions:['Flexion','Extension','Radial dev.','Ulnar dev.','Grip','Rotation'], ctrl1:{label:'Wrist flex',min:-100,max:100,bones:['hand_l'],axis:'x',scale:0.42}, ctrl2:{label:'Grip',min:0,max:100,bones:['index_01_l','middle_01_l','ring_01_l','pinky_01_l','index_02_l','middle_02_l','ring_02_l','pinky_02_l','index_03_l','middle_03_l','ring_03_l','pinky_03_l'],axis:'x',scale:0.7} },
+  elbow_r:    { label:'Right Elbow',  cam:{x:0.4,y:1.1,z:0.5}, target:{x:0.4,y:1.1,z:0}, motions:['Flexion','Extension','Pronation','Supination','Gripping'], ctrl1:{label:'Elbow flex',min:0,max:100,bones:['lowerarm_r'],axis:'x',scale:0.8} },
+  elbow_l:    { label:'Left Elbow',   cam:{x:-0.4,y:1.1,z:0.5}, target:{x:-0.4,y:1.1,z:0}, motions:['Flexion','Extension','Pronation','Supination','Gripping'], ctrl1:{label:'Elbow flex',min:0,max:100,bones:['lowerarm_l'],axis:'x',scale:0.8} },
+  shoulder_r: { label:'Right Shoulder', cam:{x:0.45,y:1.45,z:0.5}, target:{x:0.45,y:1.45,z:0}, motions:['Raise forward','Raise sideways','Reach behind','Rotation','Overhead','Carrying'], ctrl1:{label:'Arm raise',min:0,max:100,bones:['upperarm_r'],axis:'z',scale:-1.2} },
+  shoulder_l: { label:'Left Shoulder',  cam:{x:-0.45,y:1.45,z:0.5}, target:{x:-0.45,y:1.45,z:0}, motions:['Raise forward','Raise sideways','Reach behind','Rotation','Overhead','Carrying'], ctrl1:{label:'Arm raise',min:0,max:100,bones:['upperarm_l'],axis:'z',scale:1.2} },
+  knee_r:     { label:'Right Knee', cam:{x:0.12,y:0.45,z:0.5}, target:{x:0.12,y:0.45,z:0}, motions:['Bending','Straightening','Weight bearing','Twisting','Walking','Squatting'], ctrl1:{label:'Knee flex',min:0,max:100,bones:['calf_r'],axis:'x',scale:0.9} },
+  knee_l:     { label:'Left Knee',  cam:{x:-0.12,y:0.45,z:0.5}, target:{x:-0.12,y:0.45,z:0}, motions:['Bending','Straightening','Weight bearing','Twisting','Walking','Squatting'], ctrl1:{label:'Knee flex',min:0,max:100,bones:['calf_l'],axis:'x',scale:0.9} },
+  ankle_r:    { label:'Right Ankle & Foot', cam:{x:0.1,y:0.08,z:0.4}, target:{x:0.1,y:0.08,z:0}, motions:['Pointing toes','Toes up','Rolling inward','Rolling outward','Weight bearing','Walking'], ctrl1:{label:'Ankle flex',min:-100,max:100,bones:['foot_r'],axis:'x',scale:0.5} },
+  ankle_l:    { label:'Left Ankle & Foot',  cam:{x:-0.1,y:0.08,z:0.4}, target:{x:-0.1,y:0.08,z:0}, motions:['Pointing toes','Toes up','Rolling inward','Rolling outward','Weight bearing','Walking'], ctrl1:{label:'Ankle flex',min:-100,max:100,bones:['foot_l'],axis:'x',scale:0.5} },
+  back:       { label:'Back & Spine', cam:{x:0,y:0.9,z:0.7}, target:{x:0,y:0.9,z:0}, motions:['Bending forward','Bending back','Side bend','Rotation','Sitting','Standing'], ctrl1:{label:'Spine flex',min:-100,max:100,bones:['spine_01','spine_02','spine_03'],axis:'x',scale:0.25} },
+  neck:       { label:'Neck', cam:{x:0,y:1.55,z:0.4}, target:{x:0,y:1.55,z:0}, motions:['Forward bend','Backward bend','Side tilt','Rotation','Looking up','Looking down'], ctrl1:{label:'Neck flex',min:-100,max:100,bones:['neck_01','neck_02'],axis:'x',scale:0.4} },
+};
+
+let renderer, scene, camera, orbit, model;
+let cachedBones = {}, cachedMeshes = [], origMats = new Map();
+let mode = 'rotate', xrayOn = false;
+let ctrl1Val = 0, ctrl2Val = 0;
+let pins = [], motions = new Set();
+let popSev = 5, popType = null, pendingHit = null;
+let currentRegion = null;
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+window.addEventListener('DOMContentLoaded', init);
+
+function init() {
+  const viewer = document.getElementById('viewer');
+  const W = viewer.clientWidth, H = viewer.clientHeight;
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(W, H);
+  renderer.shadowMap.enabled = true;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  viewer.insertBefore(renderer.domElement, viewer.firstChild);
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x141418);
+
+  camera = new THREE.PerspectiveCamera(42, W/H, 0.001, 100);
+  camera.position.set(0, 0.9, 3.2);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const key = new THREE.DirectionalLight(0xfff8f0, 1.8);
+  key.position.set(2, 4, 3); key.castShadow = true; scene.add(key);
+  const fill = new THREE.DirectionalLight(0xf0f4ff, 0.5);
+  fill.position.set(-2, 1, 1); scene.add(fill);
+  const rim = new THREE.DirectionalLight(0xffffff, 0.3);
+  rim.position.set(0, -1, -2); scene.add(rim);
+
+  orbit = initOrbit(camera, renderer.domElement);
+  orbit.target.set(0, 0.9, 0);
+
+  const loader = new THREE.GLTFLoader();
+  loader.load(MODEL_URL,
+    gltf => {
+      model = gltf.scene;
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const sc = 1.8 / size.y;
+      model.scale.setScalar(sc);
+      model.position.set(-center.x*sc, -box.min.y*sc, -center.z*sc);
+
+      // Cache meshes and bones
+      model.traverse(c => {
+        if (c.isMesh) {
+          c.castShadow = true; c.receiveShadow = true;
+          cachedMeshes.push(c);
+          const mats = Array.isArray(c.material)?c.material:[c.material];
+          origMats.set(c.uuid, mats.map(m=>m.clone()));
+        }
+        if (c.isBone) cachedBones[c.name] = c;
+      });
+      console.log('Bones:', Object.keys(cachedBones).join(', '));
+      console.log('Meshes:', cachedMeshes.length);
+
+      scene.add(model);
+      document.getElementById('overlay').style.display = 'none';
+      document.getElementById('regionBar').style.display = 'block';
+
+      // Click on body to select region
+      renderer.domElement.addEventListener('click', onBodyClick);
+    },
+    xhr => { if(xhr.total) document.getElementById('loadTxt').textContent='Loading… '+Math.round(xhr.loaded/xhr.total*100)+'%'; },
+    err => { document.getElementById('overlay').innerHTML='<div style="font-size:26px">⚠️</div><b style="color:#ff6b6b">Load failed</b><div style="font-size:11px;color:#666;margin-top:6px">'+(err.message||err)+'</div>'; }
+  );
+
+  (function animate(){
+    requestAnimationFrame(animate);
+    orbit.update();
+    renderer.render(scene, camera);
+  })();
+
+  window.addEventListener('resize', () => {
+    const w=viewer.clientWidth, h=viewer.clientHeight;
+    camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h);
+  });
+}
+
+// ── Body click — detect region from hit position ──────────────────
+function onBodyClick(e) {
+  if (currentRegion && mode === 'pain') { onPainClick(e); return; }
+  if (currentRegion) return;
+
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y = -((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(cachedMeshes, false);
+  if (!hits.length) return;
+
+  const pt = hits[0].point;
+  const region = guessRegion(pt);
+  if (region) {
+    showRegionHint(REGIONS[region].label);
+    setTimeout(() => selectRegion(region), 300);
+  }
+}
+
+function guessRegion(pt) {
+  const x = pt.x, y = pt.y;
+  // Y positions are in world space after scaling
+  if (y > 1.5) return 'neck';
+  if (y > 1.3) return x > 0 ? 'shoulder_r' : 'shoulder_l';
+  if (y > 0.9 && Math.abs(x) > 0.3) return x > 0 ? 'elbow_r' : 'elbow_l';
+  if (y > 0.7 && Math.abs(x) > 0.4) return x > 0 ? 'wrist_r' : 'wrist_l';
+  if (y > 0.5 && Math.abs(x) < 0.35) return 'back';
+  if (y > 0.3 && y < 0.7) return x > 0 ? 'knee_r' : 'knee_l';
+  if (y < 0.2) return x > 0 ? 'ankle_r' : 'ankle_l';
+  return 'back';
+}
+
+function showRegionHint(label) {
+  const el = document.getElementById('regionLabel');
+  el.textContent = label;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 1500);
+}
+
+// ── Select region — zoom camera in ───────────────────────────────
+function selectRegion(id) {
+  currentRegion = id;
+  const r = REGIONS[id];
+
+  // Highlight selected region button
+  document.querySelectorAll('.rb').forEach(b => b.classList.remove('on'));
+  const btns = document.querySelectorAll('.rb');
+  btns.forEach(b => { if(b.getAttribute('onclick').includes(id)) b.classList.add('on'); });
+
+  // Animate camera to region
+  animateCam(r.cam, r.target);
+
+  // Show controls
+  document.getElementById('backBtn').style.display = 'block';
+  document.getElementById('ctrlPanel').style.display = 'block';
+  document.getElementById('mainSub').textContent = r.label;
+
+  // Set up motion sliders
+  setupControls(r);
+
+  // Build motion grid
+  const grid = document.getElementById('motionGrid');
+  const ICONS = ['⬆️','⬇️','🔄','↙️','↗️','✊','🚶','⬅️','➡️','🏋️'];
+  grid.innerHTML = r.motions.map((m,i) =>
+    '<div class="mb" onclick="togMot(this,\''+m+'\')"><span class="ic">'+ICONS[i%ICONS.length]+'</span>'+m+'</div>'
+  ).join('');
+
+  // Switch to pain click mode
+  renderer.domElement.removeEventListener('click', onBodyClick);
+  renderer.domElement.addEventListener('click', onPainClick);
+}
+
+function setupControls(r) {
+  const c1 = document.getElementById('ctrl1');
+  const c2 = document.getElementById('ctrl2');
+  const s1 = document.getElementById('ctrl1Slider');
+  const s2 = document.getElementById('ctrl2Slider');
+
+  if (r.ctrl1) {
+    c1.style.display = 'block';
+    document.getElementById('ctrl1Lbl').innerHTML = r.ctrl1.label + ' <span id="ctrl1Val">Neutral</span>';
+    s1.min = r.ctrl1.min; s1.max = r.ctrl1.max; s1.value = 0;
+  } else { c1.style.display = 'none'; }
+
+  if (r.ctrl2) {
+    c2.style.display = 'block';
+    document.getElementById('ctrl2Lbl').innerHTML = r.ctrl2.label + ' <span id="ctrl2Val">Open</span>';
+    s2.min = r.ctrl2.min; s2.max = r.ctrl2.max; s2.value = 0;
+  } else { c2.style.display = 'none'; }
+}
+
+function onCtrl1(v) {
+  ctrl1Val = v;
+  const r = REGIONS[currentRegion];
+  if (!r || !r.ctrl1) return;
+  const label = v < -20 ? 'Extension' : v > 20 ? 'Flexion' : 'Neutral';
+  const el = document.getElementById('ctrl1Val');
+  if(el) el.textContent = label;
+  applyBoneRotation(r.ctrl1.bones, r.ctrl1.axis, (v/100) * r.ctrl1.scale);
+}
+
+function onCtrl2(v) {
+  ctrl2Val = v;
+  const r = REGIONS[currentRegion];
+  if (!r || !r.ctrl2) return;
+  const label = v < 20 ? 'Open' : v < 60 ? 'Partial' : 'Closed';
+  const el = document.getElementById('ctrl2Val');
+  if(el) el.textContent = label;
+  applyBoneRotation(r.ctrl2.bones, r.ctrl2.axis, (v/100) * r.ctrl2.scale);
+}
+
+function applyBoneRotation(boneNames, axis, value) {
+  boneNames.forEach(name => {
+    const bone = cachedBones[name];
+    if (bone) bone.rotation[axis] = value;
+  });
+}
+
+// ── Go back ───────────────────────────────────────────────────────
+function goBack() {
+  currentRegion = null;
+  pins = []; motions = new Set();
+  document.querySelectorAll('.pm').forEach(e=>e.remove());
+  document.getElementById('pinsSec').style.display = 'none';
+  document.getElementById('goBtn').disabled = true;
+  document.getElementById('summArea').innerHTML = '';
+  document.getElementById('backBtn').style.display = 'none';
+  document.getElementById('ctrlPanel').style.display = 'none';
+  document.getElementById('mainSub').textContent = 'Rotate the body · tap a region to assess it';
+  document.querySelectorAll('.rb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('ctrl1Slider').value = 0;
+  document.getElementById('ctrl2Slider').value = 0;
+  document.querySelectorAll('.mb').forEach(b=>b.classList.remove('on'));
+
+  // Reset xray
+  if(xrayOn) toggleXray();
+
+  // Reset bone rotations
+  Object.values(cachedBones).forEach(b => { b.rotation.x=0; b.rotation.y=0; b.rotation.z=0; });
+
+  // Zoom back out
+  animateCam({x:0,y:0.9,z:3.2}, {x:0,y:0.9,z:0});
+
+  renderer.domElement.removeEventListener('click', onPainClick);
+  renderer.domElement.addEventListener('click', onBodyClick);
+}
+
+// ── Camera animation ──────────────────────────────────────────────
+function animateCam(pos, tgt) {
+  const startPos = camera.position.clone();
+  const startTgt = orbit.target.clone();
+  const endPos = new THREE.Vector3(pos.x, pos.y, pos.z);
+  const endTgt = new THREE.Vector3(tgt.x, tgt.y, tgt.z);
+  let t = 0;
+  function step() {
+    t += 0.04;
+    if (t >= 1) { camera.position.copy(endPos); orbit.target.copy(endTgt); return; }
+    const ease = t<0.5 ? 2*t*t : -1+(4-2*t)*t;
+    camera.position.lerpVectors(startPos, endPos, ease);
+    orbit.target.lerpVectors(startTgt, endTgt, ease);
+    requestAnimationFrame(step);
+  }
+  step();
+}
+
+// ── Pain click ────────────────────────────────────────────────────
+function onPainClick(e) {
+  if (mode !== 'pain') return;
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y = -((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse, camera);
+  const meshes = cachedMeshes.filter(c=>!c.userData.xwf);
+  const hits = raycaster.intersectObjects(meshes, false);
+  if (!hits.length) return;
+  const vr = document.getElementById('viewer').getBoundingClientRect();
+  pendingHit = { point: hits[0].point.clone(), sx: e.clientX-vr.left, sy: e.clientY-vr.top };
+  openPopup(pendingHit.sx, pendingHit.sy);
+}
+
+// ── Popup ─────────────────────────────────────────────────────────
+function openPopup(sx, sy) {
+  popSev=5; popType=null;
+  const pop = document.getElementById('pop');
+  const vw = document.getElementById('viewer').clientWidth;
+  pop.style.display = 'block';
+  pop.style.left = Math.min(sx, vw-200)+'px';
+  pop.style.top = Math.max(sy-210, 4)+'px';
+  renderPop();
+}
+
+function renderPop() {
+  document.getElementById('pop').innerHTML =
+    '<h3>Mark pain</h3><div class="sn" id="sn">'+popSev+'/10</div><div class="sw">'+SEVW[popSev]+'</div>'+
+    '<input type="range" min="1" max="10" value="'+popSev+'" style="width:100%;margin-bottom:7px" oninput="popSev=+this.value;document.getElementById(\'sn\').textContent=popSev+\'/10\'">'+
+    '<div class="tg">'+TYPES.map(t=>'<div class="tc'+(popType===t?' on':'')+'" onclick="popType=\''+t+'\';renderPop()">'+t+'</div>').join('')+'</div>'+
+    '<div class="pbs"><button class="pb" onclick="closePop()">Cancel</button><button class="pb ok" onclick="savePin()">Save</button></div>';
+}
+
+function closePop() { document.getElementById('pop').style.display='none'; }
+
+function savePin() {
+  if (!popType) { alert('Select a pain type'); return; }
+  const idx = pins.length;
+  const label = REGIONS[currentRegion]?.label || 'Body area';
+  pins.push({sx:pendingHit.sx,sy:pendingHit.sy,sev:popSev,type:popType,label,region:currentRegion,ctrl1:ctrl1Val,ctrl2:ctrl2Val});
+  closePop();
+  const col = COLS[idx%COLS.length];
+  const el = document.createElement('div');
+  el.className='pm'; el.style.left=pendingHit.sx+'px'; el.style.top=pendingHit.sy+'px';
+  el.innerHTML='<div class="pc" style="background:'+col+'">'+popSev+'</div>';
+  document.getElementById('pinLayer').appendChild(el);
+  renderPinList();
+  document.getElementById('goBtn').disabled=false;
+}
+
+function renderPinList() {
+  const sec = document.getElementById('pinsSec');
+  if (!pins.length) { sec.style.display='none'; return; }
+  sec.style.display='block';
+  document.getElementById('pinsLbl').textContent = pins.length+' pain location'+(pins.length>1?'s':'')+' marked';
+  document.getElementById('pinsList').innerHTML = pins.map((p,i)=>
+    '<div class="pi"><div class="pd" style="background:'+COLS[i%COLS.length]+'"></div>'+
+    '<div class="ptxt">'+p.label+'<div class="pmeta">'+p.type+' · '+p.sev+'/10</div></div>'+
+    '<span class="px" onclick="removePin('+i+')">×</span></div>'
+  ).join('');
+}
+
+function removePin(i) {
+  pins.splice(i,1);
+  document.querySelectorAll('.pm').forEach(e=>e.remove());
+  pins.forEach((p,idx)=>{
+    const el=document.createElement('div');
+    el.className='pm'; el.style.left=p.sx+'px'; el.style.top=p.sy+'px';
+    el.innerHTML='<div class="pc" style="background:'+COLS[idx%COLS.length]+'">'+p.sev+'</div>';
+    document.getElementById('pinLayer').appendChild(el);
+  });
+  renderPinList();
+  if(!pins.length) document.getElementById('goBtn').disabled=true;
+}
+
+// ── Controls ──────────────────────────────────────────────────────
+function setMode(m) {
+  mode=m; orbit.enabled=m==='rotate';
+  document.getElementById('viewer').style.cursor=m==='rotate'?'grab':'crosshair';
+  document.getElementById('btnRotate').classList.toggle('on',m==='rotate');
+  document.getElementById('btnPain').classList.toggle('on',m==='pain');
+}
+
+function toggleXray() {
+  xrayOn=!xrayOn;
+  document.getElementById('togTr').style.background=xrayOn?'#2a5aaa':'#252528';
+  document.getElementById('togTh').style.left=xrayOn?'19px':'3px';
+  cachedMeshes.forEach(c=>{
+    c.children.filter(ch=>ch.userData.xwf).forEach(ch=>c.remove(ch));
+    if(xrayOn){
+      c.material=new THREE.MeshStandardMaterial({color:0x88bbff,transparent:true,opacity:0.15,side:THREE.DoubleSide,depthWrite:false});
+      const wf=new THREE.Mesh(c.geometry,new THREE.MeshBasicMaterial({color:0x4a8aff,wireframe:true,transparent:true,opacity:0.07}));
+      wf.userData.xwf=true; c.add(wf);
+    } else {
+      const orig=origMats.get(c.uuid);
+      if(orig) c.material=orig.length===1?orig[0].clone():orig.map(m=>m.clone());
+    }
+  });
+}
+
+function togMot(el,name) {
+  el.classList.toggle('on');
+  motions.has(name)?motions.delete(name):motions.add(name);
+}
+
+// ── Orbit ─────────────────────────────────────────────────────────
+function initOrbit(cam,el){
+  const o={enabled:true,target:new THREE.Vector3(),minDist:0.1,maxDist:8,
+    _sph:new THREE.Spherical(),_dSph:new THREE.Spherical(),_scale:1,
+    _rs:new THREE.Vector2(),_re:new THREE.Vector2(),_rd:new THREE.Vector2(),_state:-1};
+  const quat=new THREE.Quaternion().setFromUnitVectors(cam.up,new THREE.Vector3(0,1,0));
+  const quatInv=quat.clone().invert();
+  const offset=new THREE.Vector3();
+  let ptrs=[];
+  el.addEventListener('pointerdown',e=>{if(!o.enabled)return;el.setPointerCapture(e.pointerId);ptrs.push(e);if(ptrs.length===1){o._state=0;o._rs.set(e.clientX,e.clientY);}});
+  el.addEventListener('pointermove',e=>{if(!o.enabled||o._state<0)return;const i=ptrs.findIndex(p=>p.pointerId===e.pointerId);if(i!==-1)ptrs[i]=e;if(o._state===0&&ptrs.length===1){o._re.set(e.clientX,e.clientY);o._rd.subVectors(o._re,o._rs).multiplyScalar(Math.PI/el.clientHeight);o._dSph.theta-=o._rd.x;o._dSph.phi-=o._rd.y;o._rs.copy(o._re);}});
+  el.addEventListener('pointerup',e=>{ptrs=ptrs.filter(p=>p.pointerId!==e.pointerId);if(!ptrs.length)o._state=-1;});
+  el.addEventListener('pointerleave',e=>{ptrs=ptrs.filter(p=>p.pointerId!==e.pointerId);if(!ptrs.length)o._state=-1;});
+  el.addEventListener('wheel',e=>{e.preventDefault();o._scale*=e.deltaY<0?0.92:1.08;},{passive:false});
+  o.update=function(){
+    offset.copy(cam.position).sub(o.target).applyQuaternion(quat);
+    o._sph.setFromVector3(offset);
+    o._sph.theta+=o._dSph.theta; o._sph.phi+=o._dSph.phi;
+    o._sph.phi=Math.max(0.05,Math.min(Math.PI-0.05,o._sph.phi));
+    o._sph.radius=Math.max(o.minDist,Math.min(o.maxDist,o._sph.radius*o._scale));
+    offset.setFromSpherical(o._sph).applyQuaternion(quatInv);
+    cam.position.copy(o.target).add(offset); cam.lookAt(o.target);
+    o._dSph.theta*=0.92; o._dSph.phi*=0.92; o._scale=1;
+  };
+  return o;
+}
+
+// ── Assessment ────────────────────────────────────────────────────
+async function runAssessment() {
+  document.getElementById('goBtn').disabled=true;
+  const area=document.getElementById('summArea');
+  area.innerHTML='<div class="summ"><div class="ltxt">⚕ Generating assessment…</div></div>';
+  area.scrollIntoView({behavior:'smooth'});
+  const r = REGIONS[currentRegion];
+  const pinDesc=pins.map((p,i)=>(i+1)+'. '+p.label+' — '+p.type+', severity '+p.sev+'/10').join('\n');
+  const prompt='You are a compassionate clinical injury assessment assistant.\n\nInjury region: '+r.label+'\nPainful motions: '+([...motions].join(', ')||'not specified')+'\nX-ray used: '+xrayOn+'\nPain locations:\n'+pinDesc+'\n\nReturn ONLY valid JSON:\n{"overview":"2-3 sentences","possibleInjuries":[{"name":"...","description":"..."}],"urgency":"Seek emergency care|See a doctor within 48 hours|Schedule an appointment|Monitor at home","urgencyReason":"...","selfCare":["...","...","..."],"disclaimer":"..."}';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:900,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const rr=JSON.parse((data.content?.[0]?.text||'{}').replace(/```json|```/g,'').trim());
+    showSumm(rr);
+  }catch(e){
+    area.innerHTML='<div class="summ" style="color:#ff6b6b;padding:16px">Could not generate. Please try again.</div>';
+    document.getElementById('goBtn').disabled=false;
+  }
+}
+
+function urgStyle(u){
+  if(!u)return{bg:'rgba(18,32,18,.9)',c:'#5aaa5a',bc:'#183018'};
+  if(u.includes('emergency'))return{bg:'rgba(42,18,18,.9)',c:'#ff6b6b',bc:'#4a1e1e'};
+  if(u.includes('48'))return{bg:'rgba(40,28,12,.9)',c:'#ffa06b',bc:'#4a3010'};
+  if(u.includes('appointment'))return{bg:'rgba(18,24,42,.9)',c:'#6bbfff',bc:'#182848'};
+  return{bg:'rgba(18,32,18,.9)',c:'#5aaa5a',bc:'#183018'};
+}
+
+function showSumm(r){
+  const u=urgStyle(r.urgency);
+  document.getElementById('summArea').innerHTML=
+    '<div class="summ"><h2>Assessment</h2><p class="ov">'+(r.overview||'')+'</p>'+
+    (r.urgency?'<div class="urg" style="background:'+u.bg+';border:0.5px solid '+u.bc+'"><div class="ut" style="color:'+u.c+'">⚡ '+r.urgency+'</div><div class="ur" style="color:'+u.c+'">'+(r.urgencyReason||'')+'</div></div>':'')+
+    '<div class="sh" style="margin-bottom:6px">Possible conditions</div>'+
+    (r.possibleInjuries||[]).map(i=>'<div class="ic2"><div class="iname">'+i.name+'</div><div class="idesc">'+i.description+'</div></div>').join('')+
+    '<div class="sh" style="margin-top:12px;margin-bottom:6px">Self-care tips</div>'+
+    (r.selfCare||[]).map(t=>'<div class="tip"><span style="color:#4a8aff;flex-shrink:0">→</span><span>'+t+'</span></div>').join('')+
+    (r.disclaimer?'<div class="disc">'+r.disclaimer+'</div>':'')+
+    '<button class="rst" onclick="goBack()">← Assess another region</button></div>';
+}
+</script>
+</body>
+</html>
