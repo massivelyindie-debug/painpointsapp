@@ -121,7 +121,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
   <div id="summArea"></div>
 </div>
 
-<!-- All scripts from same GitHub Pages origin — no CORS issues -->
 <script src="three.min.js"></script>
 <script src="GLTFLoader.js"></script>
 <script>
@@ -189,6 +188,12 @@ function init() {
       scene.add(model);
       document.getElementById('overlay').style.display='none';
       renderer.domElement.addEventListener('click', onCanvasClick);
+
+      // Log all bone names so we can wire them up correctly
+      const boneNames = [];
+      model.traverse(c => { if(c.isBone) boneNames.push(c.name); });
+      console.log('Bones found:', boneNames.length, '|', boneNames.join(', '));
+      if(boneNames.length === 0) console.log('No bones — model may be a static mesh only');
     },
     xhr => { if(xhr.total) document.getElementById('loadTxt').textContent='Loading… '+Math.round(xhr.loaded/xhr.total*100)+'%'; },
     err => showErr('Model failed: '+(err.message||err))
@@ -241,7 +246,7 @@ function onCanvasClick(e){
   const meshes=[];
   model.traverse(c=>{if(c.isMesh&&!c.userData.xwf)meshes.push(c);});
   const hits=raycaster.intersectObjects(meshes,false);
-  if(!hits.length)return;
+  if(!hits.length){ console.log('No mesh hit — click directly on the model'); return; }
   const vr=document.getElementById('viewer').getBoundingClientRect();
   pendingHit={point:hits[0].point.clone(),sx:e.clientX-vr.left,sy:e.clientY-vr.top};
   openPopup(pendingHit.sx,pendingHit.sy);
@@ -257,7 +262,7 @@ function getLabel(pt){
 }
 
 function openPopup(sx,sy){
-  popSev=5;popType=null;
+  popSev=5; popType=null;
   const pop=document.getElementById('pop');
   const vw=document.getElementById('viewer').clientWidth;
   pop.style.display='block';
@@ -274,7 +279,7 @@ function renderPop(){
     '<div class="pbs"><button class="pb" onclick="closePop()">Cancel</button><button class="pb ok" onclick="savePin()">Save</button></div>';
 }
 
-function closePop(){document.getElementById('pop').style.display='none';}
+function closePop(){ document.getElementById('pop').style.display='none'; }
 
 function savePin(){
   if(!popType){alert('Select a pain type');return;}
@@ -283,8 +288,7 @@ function savePin(){
   closePop();
   const col=COLS[idx%COLS.length];
   const el=document.createElement('div');
-  el.className='pm';el.id='pm'+idx;
-  el.style.left=pendingHit.sx+'px';el.style.top=pendingHit.sy+'px';
+  el.className='pm'; el.style.left=pendingHit.sx+'px'; el.style.top=pendingHit.sy+'px';
   el.innerHTML='<div class="pc" style="background:'+col+'">'+popSev+'</div>';
   document.getElementById('pinLayer').appendChild(el);
   renderPinList();
@@ -309,12 +313,12 @@ function removePin(i){
   pins.forEach((p,idx)=>{
     const col=COLS[idx%COLS.length];
     const el=document.createElement('div');
-    el.className='pm';el.style.left=p.sx+'px';el.style.top=p.sy+'px';
+    el.className='pm'; el.style.left=p.sx+'px'; el.style.top=p.sy+'px';
     el.innerHTML='<div class="pc" style="background:'+col+'">'+p.sev+'</div>';
     document.getElementById('pinLayer').appendChild(el);
   });
   renderPinList();
-  if(!pins.length)document.getElementById('goBtn').disabled=true;
+  if(!pins.length) document.getElementById('goBtn').disabled=true;
 }
 
 function setMode(m){
@@ -324,21 +328,23 @@ function setMode(m){
   document.getElementById('btnPain').classList.toggle('on',m==='pain');
 }
 
+// FIXED: collect meshes first, then modify — prevents infinite recursion
 function toggleXray(){
   xrayOn=!xrayOn;
   document.getElementById('togTr').style.background=xrayOn?'#2a5aaa':'#252528';
   document.getElementById('togTh').style.left=xrayOn?'19px':'3px';
   if(!model)return;
-  model.traverse(c=>{
-    if(!c.isMesh)return;
+  const meshes=[];
+  model.traverse(c=>{ if(c.isMesh && !c.userData.xwf) meshes.push(c); });
+  meshes.forEach(c=>{
     c.children.filter(ch=>ch.userData.xwf).forEach(ch=>c.remove(ch));
     if(xrayOn){
-      c.material=new THREE.MeshPhysicalMaterial({color:0x88bbff,transparent:true,opacity:0.15,side:THREE.DoubleSide,depthWrite:false});
-      const wf=new THREE.Mesh(c.geometry,new THREE.MeshBasicMaterial({color:0x5599ff,wireframe:true,transparent:true,opacity:0.1}));
-      wf.userData.xwf=true;c.add(wf);
-    }else{
+      c.material=new THREE.MeshStandardMaterial({color:0x88bbff,transparent:true,opacity:0.18,side:THREE.DoubleSide,depthWrite:false});
+      const wf=new THREE.Mesh(c.geometry,new THREE.MeshBasicMaterial({color:0x4a8aff,wireframe:true,transparent:true,opacity:0.08}));
+      wf.userData.xwf=true; c.add(wf);
+    } else {
       const orig=origMats.get(c.uuid);
-      if(orig)c.material=orig.length===1?orig[0].clone():orig.map(m=>m.clone());
+      if(orig) c.material=orig.length===1?orig[0].clone():orig.map(m=>m.clone());
     }
   });
 }
@@ -355,17 +361,24 @@ function setFlex(v){
   animBones();
 }
 
+// Collects bones safely, logs names once so we can tune the rig
 function animBones(){
   if(!model)return;
   const gr=(grip/100)*Math.PI*0.68, fl=(flex/100)*0.42;
-  model.traverse(c=>{
-    if(!c.isBone)return;
+  const bones=[];
+  model.traverse(c=>{ if(c.isBone) bones.push(c); });
+  if(!window._bonesLogged){
+    console.log('Bone count:',bones.length);
+    console.log('Bone names:',bones.map(b=>b.name).join(', '));
+    window._bonesLogged=true;
+  }
+  bones.forEach(c=>{
     const n=c.name.toLowerCase();
-    if(n.includes('wrist')||n.includes('carpus')||(n.includes('hand')&&!n.includes('finger')))c.rotation.x=fl;
-    const isFin=['index','middle','ring','pinky','little','finger'].some(k=>n.includes(k));
+    if(n.includes('wrist')||n.includes('hand')||n.includes('carpal')) c.rotation.x=fl;
+    const isFin=['index','middle','ring','pinky','little','finger','proximal','intermediate','distal'].some(k=>n.includes(k));
     const isThumb=n.includes('thumb');
-    if(isFin&&!isThumb)c.rotation.x=gr*0.88;
-    if(isThumb){c.rotation.z=-gr*0.38;c.rotation.x=gr*0.28;}
+    if(isFin&&!isThumb) c.rotation.x=gr*0.88;
+    if(isThumb){ c.rotation.z=-gr*0.38; c.rotation.x=gr*0.28; }
   });
 }
 
