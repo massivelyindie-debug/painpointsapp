@@ -132,6 +132,7 @@ const SEVW  = ['','Very mild','Mild','Mild','Moderate','Moderate','Moderate','Si
 let renderer, scene, camera, orbit, model, origMats = new Map();
 let mode = 'rotate', xrayOn = false, grip = 0, flex = 0;
 let pins = [], motions = new Set();
+let cachedBones = [], cachedMeshes = [];
 let popSev = 5, popType = null, pendingHit = null;
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -186,14 +187,19 @@ function init() {
         }
       });
       scene.add(model);
-      document.getElementById('overlay').style.display='none';
-      renderer.domElement.addEventListener('click', onCanvasClick);
 
-      // Log all bone names so we can wire them up correctly
-      const boneNames = [];
-      model.traverse(c => { if(c.isBone) boneNames.push(c.name); });
-      console.log('Bones found:', boneNames.length, '|', boneNames.join(', '));
-      if(boneNames.length === 0) console.log('No bones — model may be a static mesh only');
+      // Cache bones and meshes once — avoids repeated traverse on circular graphs
+      model.traverse(c => {
+        if (c.isMesh) { c.castShadow=true; c.receiveShadow=true; cachedMeshes.push(c); }
+        if (c.isBone) cachedBones.push(c);
+      });
+      // Store original materials
+      cachedMeshes.forEach(c => {
+        const mats = Array.isArray(c.material)?c.material:[c.material];
+        origMats.set(c.uuid, mats.map(m=>m.clone()));
+      });
+      console.log('Bones:', cachedBones.length, cachedBones.map(b=>b.name).join(', '));
+      console.log('Meshes:', cachedMeshes.length);
     },
     xhr => { if(xhr.total) document.getElementById('loadTxt').textContent='Loading… '+Math.round(xhr.loaded/xhr.total*100)+'%'; },
     err => showErr('Model failed: '+(err.message||err))
