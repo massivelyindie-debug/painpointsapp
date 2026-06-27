@@ -1,1 +1,437 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hand & Wrist Assessment</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f0f12;color:#e8e6e0;min-height:100vh}
+.app{max-width:500px;margin:0 auto;padding:14px 14px 40px}
+h1{font-size:17px;font-weight:500;margin-bottom:2px}
+.sub{font-size:12px;color:#555;margin-bottom:14px}
+#viewer{width:100%;height:380px;border-radius:14px;overflow:hidden;background:#141418;border:0.5px solid #252528;position:relative;margin-bottom:10px}
+#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#4a8aff;font-size:13px;z-index:5;background:#141418}
+.spin{width:28px;height:28px;border:2px solid #1a2a40;border-top-color:#4a8aff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#pinLayer{position:absolute;inset:0;pointer-events:none;z-index:4}
+.pm{position:absolute;transform:translate(-50%,-50%);pointer-events:none}
+.pc{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.6)}
+.hint{text-align:center;font-size:11px;color:#333;margin-bottom:10px}
+.row{display:flex;gap:5px;margin-bottom:10px}
+.rbtn{flex:1;padding:7px;text-align:center;font-size:12px;border-radius:8px;border:0.5px solid #252528;background:#161618;color:#555;cursor:pointer}
+.rbtn.on{background:#1a2a3a;border-color:#2a4060;color:#7ab3ff}
+.xrow{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:#161618;border:0.5px solid #222;border-radius:9px;margin-bottom:8px}
+.tog{position:relative;width:36px;height:20px;cursor:pointer}
+.tog-tr{position:absolute;inset:0;background:#252528;border-radius:10px;transition:.25s}
+.tog-th{position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:.25s}
+.ctrl{background:#161618;border:0.5px solid #222;border-radius:9px;padding:11px 13px;margin-bottom:8px}
+.cl{font-size:11px;color:#555;margin-bottom:5px;display:flex;justify-content:space-between}
+.cl span{color:#7ab3ff}
+input[type=range]{width:100%;-webkit-appearance:none;height:3px;border-radius:2px;background:#252528;outline:none;display:block;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#4a8aff;cursor:pointer}
+.mgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:10px}
+.mb{padding:8px 4px;text-align:center;font-size:11px;border-radius:7px;border:0.5px solid #252528;background:#161618;color:#555;cursor:pointer;line-height:1.3}
+.mb.on{background:#1a2a40;border-color:#2a4a70;color:#7ab3ff}
+.mb .ic{font-size:13px;display:block;margin-bottom:2px}
+.pi{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#161618;border:0.5px solid #222;border-radius:7px;margin-bottom:4px}
+.pd{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.ptxt{flex:1;font-size:12px;color:#aaa;line-height:1.4}
+.pmeta{font-size:10px;color:#444}
+.px{color:#333;cursor:pointer;font-size:16px;padding:0 3px;line-height:1}
+.px:hover{color:#ff6b6b}
+.popup{position:absolute;background:#1e1e28;border:0.5px solid #2a2a42;border-radius:12px;padding:13px;z-index:30;width:190px;box-shadow:0 10px 40px rgba(0,0,0,.9)}
+.popup h3{font-size:12px;font-weight:500;color:#bbb;margin-bottom:8px}
+.sn{font-size:28px;font-weight:500;text-align:center;margin-bottom:2px}
+.sw{font-size:10px;text-align:center;color:#444;margin-bottom:7px}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:8px}
+.tc{padding:5px;text-align:center;font-size:10px;border-radius:5px;border:0.5px solid #2a2a3a;background:#141420;color:#666;cursor:pointer}
+.tc.on{background:#1a2a40;border-color:#2a5aaa;color:#7ab3ff}
+.pbs{display:flex;gap:5px}
+.pb{flex:1;padding:6px;font-size:11px;border-radius:6px;border:0.5px solid #2a2a3a;background:#141420;color:#888;cursor:pointer}
+.pb.ok{background:#1a2a40;border-color:#2a5aaa;color:#7ab3ff}
+.go{width:100%;padding:12px;font-size:14px;font-weight:500;border-radius:10px;border:0.5px solid #2a5aaa;background:#1a2a40;color:#7ab3ff;cursor:pointer;margin-bottom:10px}
+.go:disabled{opacity:.3;cursor:not-allowed}
+.summ{background:#161618;border:0.5px solid #222;border-radius:12px;padding:16px;margin-top:4px}
+.summ h2{font-size:15px;font-weight:500;margin-bottom:10px}
+.ov{font-size:13px;line-height:1.7;color:#bbb;margin-bottom:12px}
+.urg{border-radius:8px;padding:9px 12px;margin-bottom:12px}
+.ut{font-size:13px;font-weight:500}
+.ur{font-size:12px;margin-top:3px;opacity:.8}
+.sh{font-size:10px;color:#444;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.ic2{background:#111114;border:0.5px solid #1e1e22;border-radius:7px;padding:9px 11px;margin-bottom:5px}
+.iname{font-size:13px;font-weight:500;margin-bottom:2px}
+.idesc{font-size:11px;color:#555;line-height:1.5}
+.tip{display:flex;gap:7px;margin-bottom:5px;font-size:12px;color:#888;line-height:1.5}
+.disc{font-size:10px;color:#333;border-top:0.5px solid #1e1e22;padding-top:10px;font-style:italic;line-height:1.5;margin-top:10px}
+.ltxt{text-align:center;padding:24px;color:#4a8aff;font-size:13px}
+.rst{width:100%;padding:9px;font-size:12px;border-radius:8px;border:0.5px solid #222;background:transparent;color:#444;cursor:pointer;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Hand &amp; Wrist Assessment</h1>
+  <p class="sub">Rotate the 3D model · adjust motion · tap to mark pain</p>
 
+  <div id="viewer">
+    <div id="overlay"><div class="spin"></div><span id="loadTxt">Loading…</span></div>
+    <div id="pinLayer"></div>
+    <div class="popup" id="pop" style="display:none"></div>
+  </div>
+  <p class="hint">Drag to rotate · Scroll to zoom · Switch to Pain mode to mark</p>
+
+  <div class="row">
+    <div class="rbtn on" id="btnRotate" onclick="setMode('rotate')">🔄 Rotate</div>
+    <div class="rbtn" id="btnPain" onclick="setMode('pain')">📍 Mark Pain</div>
+  </div>
+
+  <div class="xrow">
+    <span style="font-size:13px;color:#888">🦴 X-ray view</span>
+    <div class="tog" onclick="toggleXray()">
+      <div class="tog-tr" id="togTr"></div>
+      <div class="tog-th" id="togTh"></div>
+    </div>
+  </div>
+
+  <div class="ctrl">
+    <div class="cl">Grip <span id="gv">Open</span></div>
+    <input type="range" id="gs" min="0" max="100" value="0" oninput="setGrip(+this.value)">
+  </div>
+  <div class="ctrl">
+    <div class="cl">Wrist flex / extend <span id="fv">Neutral</span></div>
+    <input type="range" id="fs" min="-100" max="100" value="0" oninput="setFlex(+this.value)">
+  </div>
+
+  <div style="font-size:11px;color:#555;margin-bottom:6px">Which motions cause pain?</div>
+  <div class="mgrid">
+    <div class="mb" onclick="togMot(this,'Flexion')"><span class="ic">⬆️</span>Flexion</div>
+    <div class="mb" onclick="togMot(this,'Extension')"><span class="ic">⬇️</span>Extension</div>
+    <div class="mb" onclick="togMot(this,'Radial')"><span class="ic">↙️</span>Radial</div>
+    <div class="mb" onclick="togMot(this,'Ulnar')"><span class="ic">↗️</span>Ulnar</div>
+    <div class="mb" onclick="togMot(this,'Grip')"><span class="ic">✊</span>Grip</div>
+    <div class="mb" onclick="togMot(this,'Rotation')"><span class="ic">🔄</span>Rotation</div>
+  </div>
+
+  <div id="pinsSec" style="display:none;margin-bottom:10px">
+    <div id="pinsLbl" style="font-size:11px;color:#555;margin-bottom:6px"></div>
+    <div id="pinsList"></div>
+  </div>
+
+  <button class="go" id="goBtn" disabled onclick="runAssessment()">Generate assessment →</button>
+  <div id="summArea"></div>
+</div>
+
+<!-- All scripts from same GitHub Pages origin — no CORS issues -->
+<script src="three.min.js"></script>
+<script src="GLTFLoader.js"></script>
+<script>
+const MODEL_URL = 'mansforearm.glb';
+const COLS  = ['#ff5f5f','#ff9f5f','#ffd45f','#5fffaa','#5fbaff','#c05fff','#ff5fbe'];
+const TYPES = ['Sharp','Aching','Throbbing','Burning','Numb','Stiff'];
+const SEVW  = ['','Very mild','Mild','Mild','Moderate','Moderate','Moderate','Significant','Significant','Severe','Extreme'];
+
+let renderer, scene, camera, orbit, model, origMats = new Map();
+let mode = 'rotate', xrayOn = false, grip = 0, flex = 0;
+let pins = [], motions = new Set();
+let popSev = 5, popType = null, pendingHit = null;
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+window.addEventListener('DOMContentLoaded', init);
+
+function init() {
+  const viewer = document.getElementById('viewer');
+  const W = viewer.clientWidth, H = viewer.clientHeight;
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(W, H);
+  renderer.shadowMap.enabled = true;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  viewer.insertBefore(renderer.domElement, viewer.firstChild);
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x141418);
+
+  camera = new THREE.PerspectiveCamera(42, W/H, 0.001, 100);
+  camera.position.set(0, 0.05, 0.55);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const key = new THREE.DirectionalLight(0xfff8f0, 1.9);
+  key.position.set(1.5,2.5,2); key.castShadow=true; scene.add(key);
+  const fill = new THREE.DirectionalLight(0xf0f4ff,0.5);
+  fill.position.set(-2,0.5,1); scene.add(fill);
+  const rim = new THREE.DirectionalLight(0xffffff,0.35);
+  rim.position.set(0,-1.5,-2); scene.add(rim);
+
+  orbit = initOrbit(camera, renderer.domElement);
+
+  document.getElementById('loadTxt').textContent = 'Loading 3D model…';
+  const loader = new THREE.GLTFLoader();
+  loader.load(MODEL_URL,
+    gltf => {
+      model = gltf.scene;
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const sc = 0.45 / Math.max(size.x, size.y, size.z);
+      model.scale.setScalar(sc);
+      model.position.copy(center.multiplyScalar(-sc));
+      model.traverse(c => {
+        if (c.isMesh) {
+          c.castShadow=true; c.receiveShadow=true;
+          const mats = Array.isArray(c.material)?c.material:[c.material];
+          origMats.set(c.uuid, mats.map(m=>m.clone()));
+        }
+      });
+      scene.add(model);
+      document.getElementById('overlay').style.display='none';
+      renderer.domElement.addEventListener('click', onCanvasClick);
+    },
+    xhr => { if(xhr.total) document.getElementById('loadTxt').textContent='Loading… '+Math.round(xhr.loaded/xhr.total*100)+'%'; },
+    err => showErr('Model failed: '+(err.message||err))
+  );
+
+  (function animate(){
+    requestAnimationFrame(animate);
+    orbit.update();
+    renderer.render(scene,camera);
+  })();
+
+  window.addEventListener('resize',()=>{
+    const w=viewer.clientWidth,h=viewer.clientHeight;
+    camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h);
+  });
+}
+
+function initOrbit(cam,el){
+  const o={enabled:true,target:new THREE.Vector3(),minDist:0.05,maxDist:3,
+    _sph:new THREE.Spherical(),_dSph:new THREE.Spherical(),_scale:1,
+    _rs:new THREE.Vector2(),_re:new THREE.Vector2(),_rd:new THREE.Vector2(),_state:-1};
+  const quat=new THREE.Quaternion().setFromUnitVectors(cam.up,new THREE.Vector3(0,1,0));
+  const quatInv=quat.clone().invert();
+  const offset=new THREE.Vector3();
+  let ptrs=[];
+  el.addEventListener('pointerdown',e=>{if(!o.enabled)return;el.setPointerCapture(e.pointerId);ptrs.push(e);if(ptrs.length===1){o._state=0;o._rs.set(e.clientX,e.clientY);}});
+  el.addEventListener('pointermove',e=>{if(!o.enabled||o._state<0)return;const i=ptrs.findIndex(p=>p.pointerId===e.pointerId);if(i!==-1)ptrs[i]=e;if(o._state===0&&ptrs.length===1){o._re.set(e.clientX,e.clientY);o._rd.subVectors(o._re,o._rs).multiplyScalar(Math.PI/el.clientHeight);o._dSph.theta-=o._rd.x;o._dSph.phi-=o._rd.y;o._rs.copy(o._re);}});
+  el.addEventListener('pointerup',e=>{ptrs=ptrs.filter(p=>p.pointerId!==e.pointerId);if(!ptrs.length)o._state=-1;});
+  el.addEventListener('pointerleave',e=>{ptrs=ptrs.filter(p=>p.pointerId!==e.pointerId);if(!ptrs.length)o._state=-1;});
+  el.addEventListener('wheel',e=>{e.preventDefault();o._scale*=e.deltaY<0?0.95:1.05;},{passive:false});
+  o.update=function(){
+    offset.copy(cam.position).sub(o.target).applyQuaternion(quat);
+    o._sph.setFromVector3(offset);
+    o._sph.theta+=o._dSph.theta; o._sph.phi+=o._dSph.phi;
+    o._sph.phi=Math.max(0.05,Math.min(Math.PI-0.05,o._sph.phi));
+    o._sph.radius=Math.max(o.minDist,Math.min(o.maxDist,o._sph.radius*o._scale));
+    offset.setFromSpherical(o._sph).applyQuaternion(quatInv);
+    cam.position.copy(o.target).add(offset); cam.lookAt(o.target);
+    o._dSph.theta*=0.92; o._dSph.phi*=0.92; o._scale=1;
+  };
+  return o;
+}
+
+function onCanvasClick(e){
+  if(mode!=='pain'||!model)return;
+  const rect=renderer.domElement.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const meshes=[];
+  model.traverse(c=>{if(c.isMesh&&!c.userData.xwf)meshes.push(c);});
+  const hits=raycaster.intersectObjects(meshes,false);
+  if(!hits.length)return;
+  const vr=document.getElementById('viewer').getBoundingClientRect();
+  pendingHit={point:hits[0].point.clone(),sx:e.clientX-vr.left,sy:e.clientY-vr.top};
+  openPopup(pendingHit.sx,pendingHit.sy);
+}
+
+function getLabel(pt){
+  if(!pt)return 'Hand / wrist area';
+  const y=pt.y,x=pt.x;
+  if(y>0.12)return 'Forearm';
+  if(y>0.04)return 'Wrist joint';
+  if(y>-0.04)return x<-0.04?'Radial side (thumb)':x>0.04?'Ulnar side (pinky)':'Central wrist';
+  return x<-0.05?'Thenar / thumb base':'Palm / fingers';
+}
+
+function openPopup(sx,sy){
+  popSev=5;popType=null;
+  const pop=document.getElementById('pop');
+  const vw=document.getElementById('viewer').clientWidth;
+  pop.style.display='block';
+  pop.style.left=Math.min(sx,vw-200)+'px';
+  pop.style.top=Math.max(sy-210,4)+'px';
+  renderPop();
+}
+
+function renderPop(){
+  document.getElementById('pop').innerHTML=
+    '<h3>Mark pain</h3><div class="sn" id="sn">'+popSev+'/10</div><div class="sw">'+SEVW[popSev]+'</div>'+
+    '<input type="range" min="1" max="10" value="'+popSev+'" style="width:100%;margin-bottom:7px" oninput="popSev=+this.value;document.getElementById(\'sn\').textContent=popSev+\'/10\'">'+
+    '<div class="tg">'+TYPES.map(t=>'<div class="tc'+(popType===t?' on':'')+'" onclick="popType=\''+t+'\';renderPop()">'+t+'</div>').join('')+'</div>'+
+    '<div class="pbs"><button class="pb" onclick="closePop()">Cancel</button><button class="pb ok" onclick="savePin()">Save</button></div>';
+}
+
+function closePop(){document.getElementById('pop').style.display='none';}
+
+function savePin(){
+  if(!popType){alert('Select a pain type');return;}
+  const idx=pins.length;
+  pins.push({sx:pendingHit.sx,sy:pendingHit.sy,point:pendingHit.point,sev:popSev,type:popType,label:getLabel(pendingHit.point),grip:Math.round(grip),flex:Math.round(flex)});
+  closePop();
+  const col=COLS[idx%COLS.length];
+  const el=document.createElement('div');
+  el.className='pm';el.id='pm'+idx;
+  el.style.left=pendingHit.sx+'px';el.style.top=pendingHit.sy+'px';
+  el.innerHTML='<div class="pc" style="background:'+col+'">'+popSev+'</div>';
+  document.getElementById('pinLayer').appendChild(el);
+  renderPinList();
+  document.getElementById('goBtn').disabled=false;
+}
+
+function renderPinList(){
+  const sec=document.getElementById('pinsSec');
+  if(!pins.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  document.getElementById('pinsLbl').textContent=pins.length+' pain location'+(pins.length>1?'s':'')+' marked';
+  document.getElementById('pinsList').innerHTML=pins.map((p,i)=>
+    '<div class="pi"><div class="pd" style="background:'+COLS[i%COLS.length]+'"></div>'+
+    '<div class="ptxt">'+p.label+'<div class="pmeta">'+p.type+' · '+p.sev+'/10 · grip '+p.grip+'%</div></div>'+
+    '<span class="px" onclick="removePin('+i+')">×</span></div>'
+  ).join('');
+}
+
+function removePin(i){
+  pins.splice(i,1);
+  document.querySelectorAll('.pm').forEach(e=>e.remove());
+  pins.forEach((p,idx)=>{
+    const col=COLS[idx%COLS.length];
+    const el=document.createElement('div');
+    el.className='pm';el.style.left=p.sx+'px';el.style.top=p.sy+'px';
+    el.innerHTML='<div class="pc" style="background:'+col+'">'+p.sev+'</div>';
+    document.getElementById('pinLayer').appendChild(el);
+  });
+  renderPinList();
+  if(!pins.length)document.getElementById('goBtn').disabled=true;
+}
+
+function setMode(m){
+  mode=m; orbit.enabled=m==='rotate';
+  document.getElementById('viewer').style.cursor=m==='rotate'?'grab':'crosshair';
+  document.getElementById('btnRotate').classList.toggle('on',m==='rotate');
+  document.getElementById('btnPain').classList.toggle('on',m==='pain');
+}
+
+function toggleXray(){
+  xrayOn=!xrayOn;
+  document.getElementById('togTr').style.background=xrayOn?'#2a5aaa':'#252528';
+  document.getElementById('togTh').style.left=xrayOn?'19px':'3px';
+  if(!model)return;
+  model.traverse(c=>{
+    if(!c.isMesh)return;
+    c.children.filter(ch=>ch.userData.xwf).forEach(ch=>c.remove(ch));
+    if(xrayOn){
+      c.material=new THREE.MeshPhysicalMaterial({color:0x88bbff,transparent:true,opacity:0.15,side:THREE.DoubleSide,depthWrite:false});
+      const wf=new THREE.Mesh(c.geometry,new THREE.MeshBasicMaterial({color:0x5599ff,wireframe:true,transparent:true,opacity:0.1}));
+      wf.userData.xwf=true;c.add(wf);
+    }else{
+      const orig=origMats.get(c.uuid);
+      if(orig)c.material=orig.length===1?orig[0].clone():orig.map(m=>m.clone());
+    }
+  });
+}
+
+function setGrip(v){
+  grip=v;
+  document.getElementById('gv').textContent=v<20?'Open':v<50?'Slight':v<80?'Partial':'Fist';
+  animBones();
+}
+
+function setFlex(v){
+  flex=v;
+  document.getElementById('fv').textContent=v<-25?'Extension':v>25?'Flexion':'Neutral';
+  animBones();
+}
+
+function animBones(){
+  if(!model)return;
+  const gr=(grip/100)*Math.PI*0.68, fl=(flex/100)*0.42;
+  model.traverse(c=>{
+    if(!c.isBone)return;
+    const n=c.name.toLowerCase();
+    if(n.includes('wrist')||n.includes('carpus')||(n.includes('hand')&&!n.includes('finger')))c.rotation.x=fl;
+    const isFin=['index','middle','ring','pinky','little','finger'].some(k=>n.includes(k));
+    const isThumb=n.includes('thumb');
+    if(isFin&&!isThumb)c.rotation.x=gr*0.88;
+    if(isThumb){c.rotation.z=-gr*0.38;c.rotation.x=gr*0.28;}
+  });
+}
+
+function togMot(el,name){
+  el.classList.toggle('on');
+  motions.has(name)?motions.delete(name):motions.add(name);
+}
+
+async function runAssessment(){
+  document.getElementById('goBtn').disabled=true;
+  const area=document.getElementById('summArea');
+  area.innerHTML='<div class="summ"><div class="ltxt">⚕ Generating assessment…</div></div>';
+  area.scrollIntoView({behavior:'smooth'});
+  const pinDesc=pins.map((p,i)=>(i+1)+'. '+p.label+' — '+p.type+', severity '+p.sev+'/10 (grip '+p.grip+'%, flex '+(p.flex>0?'flexion':'extension')+' '+Math.abs(p.flex)+'%)').join('\n');
+  const prompt='You are a compassionate clinical injury assessment assistant.\n\nWrist/hand self-assessment:\n- Painful motions: '+([...motions].join(', ')||'not specified')+'\n- Grip during pain: '+grip+'%\n- Wrist flex: '+(flex>0?'+':'')+flex+'%\n- X-ray used: '+xrayOn+'\n- Locations:\n'+pinDesc+'\n\nReturn ONLY valid JSON:\n{"overview":"2-3 sentences","possibleInjuries":[{"name":"...","description":"..."}],"urgency":"Seek emergency care|See a doctor within 48 hours|Schedule an appointment|Monitor at home","urgencyReason":"...","selfCare":["...","...","..."],"disclaimer":"..."}';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:900,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const r=JSON.parse((data.content?.[0]?.text||'{}').replace(/```json|```/g,'').trim());
+    showSumm(r);
+  }catch(e){
+    area.innerHTML='<div class="summ" style="color:#ff6b6b;padding:16px">Could not generate. Please try again.</div>';
+    document.getElementById('goBtn').disabled=false;
+  }
+}
+
+function urgStyle(u){
+  if(!u)return{bg:'rgba(18,32,18,.9)',c:'#5aaa5a',bc:'#183018'};
+  if(u.includes('emergency'))return{bg:'rgba(42,18,18,.9)',c:'#ff6b6b',bc:'#4a1e1e'};
+  if(u.includes('48'))return{bg:'rgba(40,28,12,.9)',c:'#ffa06b',bc:'#4a3010'};
+  if(u.includes('appointment'))return{bg:'rgba(18,24,42,.9)',c:'#6bbfff',bc:'#182848'};
+  return{bg:'rgba(18,32,18,.9)',c:'#5aaa5a',bc:'#183018'};
+}
+
+function showSumm(r){
+  const u=urgStyle(r.urgency);
+  document.getElementById('summArea').innerHTML=
+    '<div class="summ"><h2>Assessment</h2><p class="ov">'+(r.overview||'')+'</p>'+
+    (r.urgency?'<div class="urg" style="background:'+u.bg+';border:0.5px solid '+u.bc+'"><div class="ut" style="color:'+u.c+'">⚡ '+r.urgency+'</div><div class="ur" style="color:'+u.c+'">'+(r.urgencyReason||'')+'</div></div>':'')+
+    '<div class="sh" style="margin-bottom:6px">Possible conditions</div>'+
+    (r.possibleInjuries||[]).map(i=>'<div class="ic2"><div class="iname">'+i.name+'</div><div class="idesc">'+i.description+'</div></div>').join('')+
+    '<div class="sh" style="margin-top:12px;margin-bottom:6px">Self-care tips</div>'+
+    (r.selfCare||[]).map(t=>'<div class="tip"><span style="color:#4a8aff;flex-shrink:0">→</span><span>'+t+'</span></div>').join('')+
+    (r.disclaimer?'<div class="disc">'+r.disclaimer+'</div>':'')+
+    '<button class="rst" onclick="restart()">← New assessment</button></div>';
+}
+
+function restart(){
+  pins=[];motions=new Set();grip=0;flex=0;xrayOn=false;
+  document.getElementById('gs').value=0;
+  document.getElementById('fs').value=0;
+  document.getElementById('gv').textContent='Open';
+  document.getElementById('fv').textContent='Neutral';
+  document.getElementById('summArea').innerHTML='';
+  document.getElementById('goBtn').disabled=true;
+  document.getElementById('togTr').style.background='#252528';
+  document.getElementById('togTh').style.left='3px';
+  document.querySelectorAll('.mb').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.pm').forEach(e=>e.remove());
+  renderPinList();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showErr(msg){
+  document.getElementById('overlay').innerHTML='<div style="font-size:26px">⚠️</div><b style="color:#ff6b6b">Could not load</b><div style="font-size:11px;color:#ff9f6b;margin-top:6px;padding:0 20px;text-align:center">'+msg+'</div>';
+}
+</script>
+</body>
+</html>
