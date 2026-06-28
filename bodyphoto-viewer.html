@@ -195,6 +195,9 @@ let currentRegion = null;
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
+// Expose to global for console debugging
+window._app = { get camera(){return camera;}, get orbit(){return orbit;}, get model(){return model;} };
+
 window.addEventListener('DOMContentLoaded', init);
 
 function init() {
