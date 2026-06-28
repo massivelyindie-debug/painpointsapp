@@ -255,6 +255,19 @@ function init() {
       console.log('Meshes:', cachedMeshes.length);
 
       scene.add(model);
+
+      // Auto-fit camera to model
+      const box2 = new THREE.Box3().setFromObject(model);
+      const boxCenter = box2.getCenter(new THREE.Vector3());
+      const boxSize = box2.getSize(new THREE.Vector3());
+      const fitDist = Math.max(boxSize.x, boxSize.y, boxSize.z) * 1.8;
+      camera.position.set(boxCenter.x, boxCenter.y, boxCenter.z + fitDist);
+      camera.lookAt(boxCenter);
+      orbit.target.copy(boxCenter);
+      orbit.minDist = fitDist * 0.2;
+      orbit.maxDist = fitDist * 4;
+      console.log('Camera set to:', camera.position.x.toFixed(2), camera.position.y.toFixed(2), camera.position.z.toFixed(2));
+      console.log('Target:', boxCenter.x.toFixed(2), boxCenter.y.toFixed(2), boxCenter.z.toFixed(2));
       document.getElementById('overlay').style.display = 'none';
       document.getElementById('regionBar').style.display = 'block';
 
