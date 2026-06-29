@@ -266,8 +266,33 @@ function init() {
       orbit.target.copy(boxCenter);
       orbit.minDist = fitDist * 0.2;
       orbit.maxDist = fitDist * 4;
+
+      // Force all materials to be visible
+      cachedMeshes.forEach(c => {
+        if (Array.isArray(c.material)) {
+          c.material.forEach(m => { m.side = THREE.DoubleSide; m.transparent = false; m.opacity = 1; m.depthWrite = true; });
+        } else {
+          c.material.side = THREE.DoubleSide;
+          c.material.transparent = false;
+          c.material.opacity = 1;
+          c.material.depthWrite = true;
+        }
+        // Re-store after fixing
+        const mats = Array.isArray(c.material)?c.material:[c.material];
+        origMats.set(c.uuid, mats.map(m=>m.clone()));
+      });
+
+      // Add a test sphere so we know the renderer works
+      const testSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 8, 8),
+        new THREE.MeshBasicMaterial({color: 0xff0000})
+      );
+      testSphere.position.copy(boxCenter);
+      scene.add(testSphere);
+
       console.log('Camera set to:', camera.position.x.toFixed(2), camera.position.y.toFixed(2), camera.position.z.toFixed(2));
       console.log('Target:', boxCenter.x.toFixed(2), boxCenter.y.toFixed(2), boxCenter.z.toFixed(2));
+      console.log('Model size:', boxSize.x.toFixed(2), boxSize.y.toFixed(2), boxSize.z.toFixed(2));
       document.getElementById('overlay').style.display = 'none';
       document.getElementById('regionBar').style.display = 'block';
 
