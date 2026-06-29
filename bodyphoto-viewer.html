@@ -104,6 +104,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
     <div id="pinLayer"></div>
     <div class="popup" id="pop" style="display:none"></div>
     <div id="regionLabel"></div>
+    <button id="resetBtn" onclick="resetView()" style="position:absolute;bottom:10px;right:10px;z-index:6;padding:6px 12px;font-size:11px;border-radius:7px;border:0.5px solid #2a4060;background:rgba(20,20,30,0.85);color:#7ab3ff;cursor:pointer;backdrop-filter:blur(4px)">⊙ Reset view</button>
   </div>
 
   <!-- Step 1: region selector -->
@@ -270,11 +271,7 @@ function init() {
 
       // Add entire GLTF scene (includes skeleton roots)
       scene.add(model);
-      // Force add all children directly to scene as fallback
-      const toAdd = [];
-      model.traverse(c => { if(c.parent === model) toAdd.push(c); });
-      toAdd.forEach(c => scene.add(c));
-      console.log('Added to scene:', toAdd.length, 'objects');
+      console.log('Model added, children:', model.children.length);
 
       // Reset skeleton pose and ensure visibility
       cachedMeshes.forEach(c => {
@@ -286,16 +283,27 @@ function init() {
         c.frustumCulled = false;
       });
 
-      // Auto-fit camera to model
       const box2 = new THREE.Box3().setFromObject(model);
       const boxCenter = box2.getCenter(new THREE.Vector3());
       const boxSize = box2.getSize(new THREE.Vector3());
-      const fitDist = Math.max(boxSize.x, boxSize.y, boxSize.z) * 1.8;
-      camera.position.set(boxCenter.x, boxCenter.y, boxCenter.z + fitDist);
-      camera.lookAt(boxCenter);
-      orbit.target.copy(boxCenter);
-      orbit.minDist = fitDist * 0.2;
-      orbit.maxDist = fitDist * 4;
+      const maxDim = Math.max(boxSize.x, boxSize.y, boxSize.z);
+      // Scale so the model fills about 1.8 units tall
+      const targetHeight = 1.8;
+      const sc2 = targetHeight / boxSize.y;
+      model.scale.setScalar(sc2);
+      // Re-center after scaling
+      const box3 = new THREE.Box3().setFromObject(model);
+      const center2 = box3.getCenter(new THREE.Vector3());
+      model.position.sub(center2);
+      model.position.y -= box3.min.y; // sit on ground
+      // Recompute box after repositioning
+      const box4 = new THREE.Box3().setFromObject(model);
+      const finalCenter = box4.getCenter(new THREE.Vector3());
+      const finalSize = box4.getSize(new THREE.Vector3());
+      const fitDist = Math.max(finalSize.x, finalSize.y, finalSize.z) * 1.6;
+      camera.position.set(finalCenter.x, finalCenter.y, finalCenter.z + fitDist);
+      camera.lookAt(finalCenter);
+      orbit.target.copy(finalCenter);
 
       // Replace materials — skinning must be true for SkinnedMesh bone animation
       cachedMeshes.forEach(c => {
@@ -310,6 +318,9 @@ function init() {
         c.frustumCulled = false;
       });
 
+      // Store default camera position for reset
+      defaultCamPos.copy(camera.position);
+      defaultTarget.copy(orbit.target);
       console.log('Camera set to:', camera.position.x.toFixed(2), camera.position.y.toFixed(2), camera.position.z.toFixed(2));
       console.log('Target:', boxCenter.x.toFixed(2), boxCenter.y.toFixed(2), boxCenter.z.toFixed(2));
       console.log('Model size:', boxSize.x.toFixed(2), boxSize.y.toFixed(2), boxSize.z.toFixed(2));
