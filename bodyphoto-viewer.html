@@ -171,18 +171,32 @@ const SEVW  = ['','Very mild','Mild','Mild','Moderate','Moderate','Moderate','Si
 
 // Metahuman standard bone names per region
 const REGIONS = {
-  wrist_r: { label:'Right Wrist & Hand', cam:{x:0.5,y:1.2,z:1.5}, target:{x:0.5,y:1.2,z:0}, motions:['Flexion','Extension','Radial dev.','Ulnar dev.','Grip','Rotation'], ctrl1:{label:'Wrist flex',min:-100,max:100,bones:['DHIbodywrist_inner_r','DHIbodywrist_outer_r'],axis:'x',scale:0.42}, ctrl2:{label:'Grip',min:0,max:100,bones:['DHIbodyindex_01_r','DHIbodymiddle_01_r','DHIbodyring_01_r','DHIbodypinky_01_r','DHIbodyindex_02_r','DHIbodymiddle_02_r','DHIbodyring_02_r','DHIbodypinky_02_r','DHIbodyindex_03_r','DHIbodymiddle_03_r','DHIbodyring_03_r','DHIbodypinky_03_r'],axis:'x',scale:0.7} },
-  wrist_l: { label:'Left Wrist & Hand', cam:{x:-0.5,y:1.2,z:1.5}, target:{x:-0.5,y:1.2,z:0}, motions:['Flexion','Extension','Radial dev.','Ulnar dev.','Grip','Rotation'], ctrl1:{label:'Wrist flex',min:-100,max:100,bones:['DHIbodywrist_inner_l','DHIbodywrist_outer_l'],axis:'x',scale:0.42}, ctrl2:{label:'Grip',min:0,max:100,bones:['DHIbodyindex_01_l','DHIbodymiddle_01_l','DHIbodyring_01_l','DHIbodypinky_01_l','DHIbodyindex_02_l','DHIbodymiddle_02_l','DHIbodyring_02_l','DHIbodypinky_02_l','DHIbodyindex_03_l','DHIbodymiddle_03_l','DHIbodyring_03_l','DHIbodypinky_03_l'],axis:'x',scale:0.7} },
-  elbow_r:    { label:'Right Elbow',  cam:{x:0.6,y:1.4,z:1.5}, target:{x:0.6,y:1.4,z:0}, motions:['Flexion','Extension','Pronation','Supination','Gripping'], ctrl1:{label:'Elbow flex',min:0,max:100,bones:['DHIbodylowerarm_r'],axis:'x',scale:0.8} },
-  elbow_l:    { label:'Left Elbow',   cam:{x:-0.6,y:1.4,z:1.5}, target:{x:-0.6,y:1.4,z:0}, motions:['Flexion','Extension','Pronation','Supination','Gripping'], ctrl1:{label:'Elbow flex',min:0,max:100,bones:['DHIbodylowerarm_l'],axis:'x',scale:0.8} },
-  shoulder_r: { label:'Right Shoulder', cam:{x:0.7,y:1.75,z:1.5}, target:{x:0.7,y:1.75,z:0}, motions:['Raise forward','Raise sideways','Reach behind','Rotation','Overhead','Carrying'], ctrl1:{label:'Arm raise',min:0,max:100,bones:['DHIbodyupperarm_r'],axis:'z',scale:-1.2} },
-  shoulder_l: { label:'Left Shoulder',  cam:{x:-0.7,y:1.75,z:1.5}, target:{x:-0.7,y:1.75,z:0}, motions:['Raise forward','Raise sideways','Reach behind','Rotation','Overhead','Carrying'], ctrl1:{label:'Arm raise',min:0,max:100,bones:['DHIbodyupperarm_l'],axis:'z',scale:1.2} },
-  knee_r:     { label:'Right Knee', cam:{x:0.2,y:0.7,z:1.5}, target:{x:0.2,y:0.7,z:0}, motions:['Bending','Straightening','Weight bearing','Twisting','Walking','Squatting'], ctrl1:{label:'Knee flex',min:0,max:100,bones:['DHIbodycalf_r'],axis:'x',scale:0.9} },
-  knee_l:     { label:'Left Knee',  cam:{x:-0.2,y:0.7,z:1.5}, target:{x:-0.2,y:0.7,z:0}, motions:['Bending','Straightening','Weight bearing','Twisting','Walking','Squatting'], ctrl1:{label:'Knee flex',min:0,max:100,bones:['DHIbodycalf_l'],axis:'x',scale:0.9} },
-  ankle_r:    { label:'Right Ankle & Foot', cam:{x:0.15,y:0.15,z:1.2}, target:{x:0.15,y:0.15,z:0}, motions:['Pointing toes','Toes up','Rolling inward','Rolling outward','Weight bearing','Walking'], ctrl1:{label:'Ankle flex',min:-100,max:100,bones:['DHIbodyfoot_r'],axis:'x',scale:0.5} },
-  ankle_l:    { label:'Left Ankle & Foot',  cam:{x:-0.15,y:0.15,z:1.2}, target:{x:-0.15,y:0.15,z:0}, motions:['Pointing toes','Toes up','Rolling inward','Rolling outward','Weight bearing','Walking'], ctrl1:{label:'Ankle flex',min:-100,max:100,bones:['DHIbodyfoot_l'],axis:'x',scale:0.5} },
-  back:       { label:'Back & Spine', cam:{x:0,y:1.2,z:2}, target:{x:0,y:1.2,z:0}, motions:['Bending forward','Bending back','Side bend','Rotation','Sitting','Standing'], ctrl1:{label:'Spine flex',min:-100,max:100,bones:['DHIbodyspine_01','DHIbodyspine_02','DHIbodyspine_03'],axis:'x',scale:0.25} },
-  neck:       { label:'Neck', cam:{x:0,y:1.9,z:1.2}, target:{x:0,y:1.9,z:0}, motions:['Forward bend','Backward bend','Side tilt','Rotation','Looking up','Looking down'], ctrl1:{label:'Neck flex',min:-100,max:100,bones:['DHIbodyneck_01','DHIbodyneck_02'],axis:'x',scale:0.4} },
+  wrist_r:    { label:'Right Wrist & Hand', cam:{x:0.5,y:1.2,z:1.5}, target:{x:0.5,y:1.2,z:0}, motions:['Flexion','Extension','Radial dev.','Ulnar dev.','Grip','Rotation'],
+    ctrl1:{label:'Wrist flex',min:-100,max:100,bones:['DHIbodywrist_inner_r_0250','DHIbodywrist_outer_r_0251'],axis:'x',scale:0.42},
+    ctrl2:{label:'Grip',min:0,max:100,bones:['DHIbodyindex_01_r_0230','DHIbodymiddle_01_r_0149','DHIbodyring_01_r_0190','DHIbodypinky_01_r_0168','DHIbodyindex_02_r_0231','DHIbodymiddle_02_r_0150','DHIbodyring_02_r_0191','DHIbodypinky_02_r_0169','DHIbodyindex_03_r_0232','DHIbodymiddle_03_r_0151','DHIbodyring_03_r_0192','DHIbodypinky_03_r_0170'],axis:'x',scale:0.7} },
+  wrist_l:    { label:'Left Wrist & Hand', cam:{x:-0.5,y:1.2,z:1.5}, target:{x:-0.5,y:1.2,z:0}, motions:['Flexion','Extension','Radial dev.','Ulnar dev.','Grip','Rotation'],
+    ctrl1:{label:'Wrist flex',min:-100,max:100,bones:['DHIbodywrist_inner_l_0122','DHIbodywrist_outer_l_0123'],axis:'x',scale:0.42},
+    ctrl2:{label:'Grip',min:0,max:100,bones:['DHIbodyindex_01_l_0101','DHIbodymiddle_01_l_018','DHIbodyring_01_l_062','DHIbodypinky_01_l_040','DHIbodyindex_02_l_0102','DHIbodymiddle_02_l_019','DHIbodyring_02_l_063','DHIbodypinky_02_l_041','DHIbodyindex_03_l_0103','DHIbodymiddle_03_l_020','DHIbodyring_03_l_064','DHIbodypinky_03_l_042'],axis:'x',scale:0.7} },
+  elbow_r:    { label:'Right Elbow', cam:{x:0.6,y:1.4,z:1.5}, target:{x:0.6,y:1.4,z:0}, motions:['Flexion','Extension','Pronation','Supination','Gripping'],
+    ctrl1:{label:'Elbow flex',min:0,max:100,bones:['DHIbodylowerarm_fwd_r_0256','DHIbodylowerarm_out_r_0255'],axis:'x',scale:0.8} },
+  elbow_l:    { label:'Left Elbow', cam:{x:-0.6,y:1.4,z:1.5}, target:{x:-0.6,y:1.4,z:0}, motions:['Flexion','Extension','Pronation','Supination','Gripping'],
+    ctrl1:{label:'Elbow flex',min:0,max:100,bones:['DHIbodylowerarm_fwd_l_0129','DHIbodylowerarm_out_l_0127'],axis:'x',scale:0.8} },
+  shoulder_r: { label:'Right Shoulder', cam:{x:0.7,y:1.75,z:1.5}, target:{x:0.7,y:1.75,z:0}, motions:['Raise forward','Raise sideways','Reach behind','Rotation','Overhead','Carrying'],
+    ctrl1:{label:'Arm raise',min:0,max:100,bones:['DHIbodyupperarm_fwd_r_0267','DHIbodyupperarm_out_r_0270'],axis:'z',scale:-1.2} },
+  shoulder_l: { label:'Left Shoulder', cam:{x:-0.7,y:1.75,z:1.5}, target:{x:-0.7,y:1.75,z:0}, motions:['Raise forward','Raise sideways','Reach behind','Rotation','Overhead','Carrying'],
+    ctrl1:{label:'Arm raise',min:0,max:100,bones:['DHIbodyupperarm_fwd_l_0139','DHIbodyupperarm_out_l_0141'],axis:'z',scale:1.2} },
+  knee_r:     { label:'Right Knee', cam:{x:0.2,y:0.7,z:1.5}, target:{x:0.2,y:0.7,z:0}, motions:['Bending','Straightening','Weight bearing','Twisting','Walking','Squatting'],
+    ctrl1:{label:'Knee flex',min:0,max:100,bones:['DHIbodycalf_knee_r_0331','DHIbodycalf_kneeBack_r_0330'],axis:'x',scale:0.9} },
+  knee_l:     { label:'Left Knee', cam:{x:-0.2,y:0.7,z:1.5}, target:{x:-0.2,y:0.7,z:0}, motions:['Bending','Straightening','Weight bearing','Twisting','Walking','Squatting'],
+    ctrl1:{label:'Knee flex',min:0,max:100,bones:['DHIbodycalf_knee_l_0298','DHIbodycalf_kneeBack_l_0297'],axis:'x',scale:0.9} },
+  ankle_r:    { label:'Right Ankle & Foot', cam:{x:0.15,y:0.15,z:1.2}, target:{x:0.15,y:0.15,z:0}, motions:['Pointing toes','Toes up','Rolling inward','Rolling outward','Weight bearing','Walking'],
+    ctrl1:{label:'Ankle flex',min:-100,max:100,bones:['DHIbodyfoot_r_0312','DHIbodyankle_fwd_r_0325','DHIbodyankle_bck_r_0324'],axis:'x',scale:0.5} },
+  ankle_l:    { label:'Left Ankle & Foot', cam:{x:-0.15,y:0.15,z:1.2}, target:{x:-0.15,y:0.15,z:0}, motions:['Pointing toes','Toes up','Rolling inward','Rolling outward','Weight bearing','Walking'],
+    ctrl1:{label:'Ankle flex',min:-100,max:100,bones:['DHIbodyfoot_l_0279','DHIbodyankle_fwd_l_0292','DHIbodyankle_bck_l_0291'],axis:'x',scale:0.5} },
+  back:       { label:'Back & Spine', cam:{x:0,y:1.2,z:2}, target:{x:0,y:1.2,z:0}, motions:['Bending forward','Bending back','Side bend','Rotation','Sitting','Standing'],
+    ctrl1:{label:'Spine flex',min:-100,max:100,bones:['DHIbodyspine_01_05','DHIbodyspine_02_06','DHIbodyspine_03_07','DHIbodyspine_04_08'],axis:'x',scale:0.25} },
+  neck:       { label:'Neck', cam:{x:0,y:1.9,z:1.2}, target:{x:0,y:1.9,z:0}, motions:['Forward bend','Backward bend','Side tilt','Rotation','Looking up','Looking down'],
+    ctrl1:{label:'Neck flex',min:-100,max:100,bones:['DHIbodyneck_01_010','DHIbodyneck_02_011'],axis:'x',scale:0.4} },
 };
 
 let renderer, scene, camera, orbit, model;
@@ -257,8 +271,15 @@ function init() {
       // Add entire GLTF scene (includes skeleton roots)
       scene.add(model);
 
-      // Also add any skeleton roots that might be separate
-      if (gltf.scene !== model) scene.add(gltf.scene);
+      // Reset skeleton pose and ensure visibility
+      cachedMeshes.forEach(c => {
+        if (c.isSkinnedMesh) {
+          c.skeleton.pose(); // reset to bind pose
+          c.bindModeNonIndexed = false;
+        }
+        c.visible = true;
+        c.frustumCulled = false;
+      });
 
       // Auto-fit camera to model
       const box2 = new THREE.Box3().setFromObject(model);
