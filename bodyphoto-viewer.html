@@ -254,7 +254,11 @@ function init() {
       console.log('Bones:', Object.keys(cachedBones).join(', '));
       console.log('Meshes:', cachedMeshes.length);
 
+      // Add entire GLTF scene (includes skeleton roots)
       scene.add(model);
+
+      // Also add any skeleton roots that might be separate
+      if (gltf.scene !== model) scene.add(gltf.scene);
 
       // Auto-fit camera to model
       const box2 = new THREE.Box3().setFromObject(model);
@@ -275,7 +279,7 @@ function init() {
         });
         c.material = skinMat;
         origMats.set(c.uuid, [skinMat.clone()]);
-      console.log('Mesh type:', c.type, 'isSkinnedMesh:', c.isSkinnedMesh, 'visible:', c.visible);
+              console.log('Mesh type:', c.type, 'isSkinnedMesh:', c.isSkinnedMesh, 'visible:', c.visible, 'skeleton bones:', c.isSkinnedMesh ? c.skeleton?.bones?.length : 'N/A', 'parent:', c.parent?.type);
         c.visible = true;
         c.frustumCulled = false;
       });
