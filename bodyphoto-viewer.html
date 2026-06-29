@@ -171,8 +171,8 @@ const SEVW  = ['','Very mild','Mild','Mild','Moderate','Moderate','Moderate','Si
 
 // Metahuman standard bone names per region
 const REGIONS = {
-  wrist_r:    { label:'Right Wrist & Hand', cam:{x:0.5,y:1.2,z:1.5}, target:{x:0.5,y:1.2,z:0}, motions:['Flexion','Extension','Radial dev.','Ulnar dev.','Grip','Rotation'], ctrl1:{label:'Wrist flex',min:-100,max:100,bones:['DHIbodyhand_r'],axis:'x',scale:0.42}, ctrl2:{label:'Grip',min:0,max:100,bones:['DHIbodyindex_01_r','DHIbodymiddle_01_r','DHIbodyring_01_r','DHIbodypinky_01_r','DHIbodyindex_02_r','DHIbodymiddle_02_r','DHIbodyring_02_r','DHIbodypinky_02_r','DHIbodyindex_03_r','DHIbodymiddle_03_r','DHIbodyring_03_r','DHIbodypinky_03_r'],axis:'x',scale:0.7} },
-  wrist_l:    { label:'Left Wrist & Hand',  cam:{x:-0.5,y:1.2,z:1.5}, target:{x:-0.5,y:1.2,z:0}, motions:['Flexion','Extension','Radial dev.','Ulnar dev.','Grip','Rotation'], ctrl1:{label:'Wrist flex',min:-100,max:100,bones:['DHIbodyhand_l'],axis:'x',scale:0.42}, ctrl2:{label:'Grip',min:0,max:100,bones:['DHIbodyindex_01_l','DHIbodymiddle_01_l','DHIbodyring_01_l','DHIbodypinky_01_l','DHIbodyindex_02_l','DHIbodymiddle_02_l','DHIbodyring_02_l','DHIbodypinky_02_l','DHIbodyindex_03_l','DHIbodymiddle_03_l','DHIbodyring_03_l','DHIbodypinky_03_l'],axis:'x',scale:0.7} },
+  wrist_r: { label:'Right Wrist & Hand', cam:{x:0.5,y:1.2,z:1.5}, target:{x:0.5,y:1.2,z:0}, motions:['Flexion','Extension','Radial dev.','Ulnar dev.','Grip','Rotation'], ctrl1:{label:'Wrist flex',min:-100,max:100,bones:['DHIbodywrist_inner_r','DHIbodywrist_outer_r'],axis:'x',scale:0.42}, ctrl2:{label:'Grip',min:0,max:100,bones:['DHIbodyindex_01_r','DHIbodymiddle_01_r','DHIbodyring_01_r','DHIbodypinky_01_r','DHIbodyindex_02_r','DHIbodymiddle_02_r','DHIbodyring_02_r','DHIbodypinky_02_r','DHIbodyindex_03_r','DHIbodymiddle_03_r','DHIbodyring_03_r','DHIbodypinky_03_r'],axis:'x',scale:0.7} },
+  wrist_l: { label:'Left Wrist & Hand', cam:{x:-0.5,y:1.2,z:1.5}, target:{x:-0.5,y:1.2,z:0}, motions:['Flexion','Extension','Radial dev.','Ulnar dev.','Grip','Rotation'], ctrl1:{label:'Wrist flex',min:-100,max:100,bones:['DHIbodywrist_inner_l','DHIbodywrist_outer_l'],axis:'x',scale:0.42}, ctrl2:{label:'Grip',min:0,max:100,bones:['DHIbodyindex_01_l','DHIbodymiddle_01_l','DHIbodyring_01_l','DHIbodypinky_01_l','DHIbodyindex_02_l','DHIbodymiddle_02_l','DHIbodyring_02_l','DHIbodypinky_02_l','DHIbodyindex_03_l','DHIbodymiddle_03_l','DHIbodyring_03_l','DHIbodypinky_03_l'],axis:'x',scale:0.7} },
   elbow_r:    { label:'Right Elbow',  cam:{x:0.6,y:1.4,z:1.5}, target:{x:0.6,y:1.4,z:0}, motions:['Flexion','Extension','Pronation','Supination','Gripping'], ctrl1:{label:'Elbow flex',min:0,max:100,bones:['DHIbodylowerarm_r'],axis:'x',scale:0.8} },
   elbow_l:    { label:'Left Elbow',   cam:{x:-0.6,y:1.4,z:1.5}, target:{x:-0.6,y:1.4,z:0}, motions:['Flexion','Extension','Pronation','Supination','Gripping'], ctrl1:{label:'Elbow flex',min:0,max:100,bones:['DHIbodylowerarm_l'],axis:'x',scale:0.8} },
   shoulder_r: { label:'Right Shoulder', cam:{x:0.7,y:1.75,z:1.5}, target:{x:0.7,y:1.75,z:0}, motions:['Raise forward','Raise sideways','Reach behind','Rotation','Overhead','Carrying'], ctrl1:{label:'Arm raise',min:0,max:100,bones:['DHIbodyupperarm_r'],axis:'z',scale:-1.2} },
@@ -267,18 +267,15 @@ function init() {
       orbit.minDist = fitDist * 0.2;
       orbit.maxDist = fitDist * 4;
 
-      // Force replace all materials with a visible skin material WITH skinning enabled
+      // Replace materials — skinning must be true for SkinnedMesh bone animation
       cachedMeshes.forEach(c => {
-        const isSkinnedMesh = c.isSkinnedMesh;
         const skinMat = new THREE.MeshStandardMaterial({
-          color: 0xc68642,
-          roughness: 0.8,
-          metalness: 0.0,
-          side: THREE.DoubleSide,
-          skinning: isSkinnedMesh, // critical for bone animation
+          color: 0xc68642, roughness: 0.8, metalness: 0.0,
+          side: THREE.DoubleSide, skinning: true,
         });
         c.material = skinMat;
         origMats.set(c.uuid, [skinMat.clone()]);
+        console.log('Mesh type:', c.type, 'isSkinnedMesh:', c.isSkinnedMesh);
       });
 
       // Add a test sphere so we know the renderer works
