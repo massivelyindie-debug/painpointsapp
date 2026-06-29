@@ -267,14 +267,16 @@ function init() {
       orbit.minDist = fitDist * 0.2;
       orbit.maxDist = fitDist * 4;
 
-      // Force replace all materials with a visible skin material
-      const skinMat = new THREE.MeshStandardMaterial({
-        color: 0xc68642,
-        roughness: 0.8,
-        metalness: 0.0,
-        side: THREE.DoubleSide,
-      });
+      // Force replace all materials with a visible skin material WITH skinning enabled
       cachedMeshes.forEach(c => {
+        const isSkinnedMesh = c.isSkinnedMesh;
+        const skinMat = new THREE.MeshStandardMaterial({
+          color: 0xc68642,
+          roughness: 0.8,
+          metalness: 0.0,
+          side: THREE.DoubleSide,
+          skinning: isSkinnedMesh, // critical for bone animation
+        });
         c.material = skinMat;
         origMats.set(c.uuid, [skinMat.clone()]);
       });
@@ -566,11 +568,11 @@ function toggleXray() {
   xrayOn=!xrayOn;
   document.getElementById('togTr').style.background=xrayOn?'#2a5aaa':'#252528';
   document.getElementById('togTh').style.left=xrayOn?'19px':'3px';
-  cachedMeshes.forEach(c=>{
+      cachedMeshes.forEach(c=>{
     c.children.filter(ch=>ch.userData.xwf).forEach(ch=>c.remove(ch));
     if(xrayOn){
-      c.material=new THREE.MeshStandardMaterial({color:0x88bbff,transparent:true,opacity:0.15,side:THREE.DoubleSide,depthWrite:false});
-      const wf=new THREE.Mesh(c.geometry,new THREE.MeshBasicMaterial({color:0x4a8aff,wireframe:true,transparent:true,opacity:0.07}));
+      c.material=new THREE.MeshStandardMaterial({color:0x88bbff,transparent:true,opacity:0.15,side:THREE.DoubleSide,depthWrite:false,skinning:c.isSkinnedMesh});
+      const wf=new THREE.Mesh(c.geometry,new THREE.MeshBasicMaterial({color:0x4a8aff,wireframe:true,transparent:true,opacity:0.07,skinning:c.isSkinnedMesh}));
       wf.userData.xwf=true; c.add(wf);
     } else {
       const orig=origMats.get(c.uuid);
