@@ -280,14 +280,6 @@ function init() {
         c.frustumCulled = false;
       });
 
-      // Add a test sphere so we know the renderer works
-      const testSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(0.1, 8, 8),
-        new THREE.MeshBasicMaterial({color: 0xff0000})
-      );
-      testSphere.position.copy(boxCenter);
-      scene.add(testSphere);
-
       console.log('Camera set to:', camera.position.x.toFixed(2), camera.position.y.toFixed(2), camera.position.z.toFixed(2));
       console.log('Target:', boxCenter.x.toFixed(2), boxCenter.y.toFixed(2), boxCenter.z.toFixed(2));
       console.log('Model size:', boxSize.x.toFixed(2), boxSize.y.toFixed(2), boxSize.z.toFixed(2));
