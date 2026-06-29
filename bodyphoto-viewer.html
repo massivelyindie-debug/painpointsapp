@@ -270,6 +270,11 @@ function init() {
 
       // Add entire GLTF scene (includes skeleton roots)
       scene.add(model);
+      // Force add all children directly to scene as fallback
+      const toAdd = [];
+      model.traverse(c => { if(c.parent === model) toAdd.push(c); });
+      toAdd.forEach(c => scene.add(c));
+      console.log('Added to scene:', toAdd.length, 'objects');
 
       // Reset skeleton pose and ensure visibility
       cachedMeshes.forEach(c => {
