@@ -267,19 +267,16 @@ function init() {
       orbit.minDist = fitDist * 0.2;
       orbit.maxDist = fitDist * 4;
 
-      // Force all materials to be visible
+      // Force replace all materials with a visible skin material
+      const skinMat = new THREE.MeshStandardMaterial({
+        color: 0xc68642,
+        roughness: 0.8,
+        metalness: 0.0,
+        side: THREE.DoubleSide,
+      });
       cachedMeshes.forEach(c => {
-        if (Array.isArray(c.material)) {
-          c.material.forEach(m => { m.side = THREE.DoubleSide; m.transparent = false; m.opacity = 1; m.depthWrite = true; });
-        } else {
-          c.material.side = THREE.DoubleSide;
-          c.material.transparent = false;
-          c.material.opacity = 1;
-          c.material.depthWrite = true;
-        }
-        // Re-store after fixing
-        const mats = Array.isArray(c.material)?c.material:[c.material];
-        origMats.set(c.uuid, mats.map(m=>m.clone()));
+        c.material = skinMat;
+        origMats.set(c.uuid, [skinMat.clone()]);
       });
 
       // Add a test sphere so we know the renderer works
