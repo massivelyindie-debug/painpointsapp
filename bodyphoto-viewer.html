@@ -275,7 +275,9 @@ function init() {
         });
         c.material = skinMat;
         origMats.set(c.uuid, [skinMat.clone()]);
-        console.log('Mesh type:', c.type, 'isSkinnedMesh:', c.isSkinnedMesh);
+      console.log('Mesh type:', c.type, 'isSkinnedMesh:', c.isSkinnedMesh, 'visible:', c.visible);
+        c.visible = true;
+        c.frustumCulled = false;
       });
 
       // Add a test sphere so we know the renderer works
