@@ -300,10 +300,12 @@ function init() {
       const box4 = new THREE.Box3().setFromObject(model);
       const finalCenter = box4.getCenter(new THREE.Vector3());
       const finalSize = box4.getSize(new THREE.Vector3());
-      const fitDist = Math.max(finalSize.x, finalSize.y, finalSize.z) * 1.6;
+      const fitDist = Math.max(finalSize.x, finalSize.y, finalSize.z) * 2.5;
       camera.position.set(finalCenter.x, finalCenter.y, finalCenter.z + fitDist);
       camera.lookAt(finalCenter);
       orbit.target.copy(finalCenter);
+      orbit.minDist = 0.1;
+      orbit.maxDist = fitDist * 5;
 
       // Replace materials — skinning must be true for SkinnedMesh bone animation
       cachedMeshes.forEach(c => {
