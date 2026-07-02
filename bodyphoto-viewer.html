@@ -268,16 +268,22 @@ function toggleXray() {
   xrayOn = !xrayOn;
   document.getElementById('xrayBtn').classList.toggle('active', xrayOn);
   cachedMeshes.forEach(c => {
-    // Remove old wireframes
+    // Remove old xray meshes
     const toRemove = c.children.filter(ch => ch.userData.xwf);
     toRemove.forEach(ch => c.remove(ch));
+
     if (xrayOn) {
-      c.material = new THREE.MeshPhongMaterial({
-        color: 0x88bbff, transparent: true, opacity: 0.12,
-        side: THREE.DoubleSide, depthWrite: false, skinning: true,
+      // Semi-transparent skin
+      c.material = new THREE.MeshBasicMaterial({
+        color: 0x88bbff, transparent: true, opacity: 0.08,
+        side: THREE.DoubleSide, depthWrite: false,
       });
+      // Solid wireframe on top
       const wf = new THREE.Mesh(c.geometry,
-        new THREE.MeshBasicMaterial({ color: 0x4a8aff, wireframe: true, transparent: true, opacity: 0.25 })
+        new THREE.MeshBasicMaterial({
+          color: 0x7ab3ff, wireframe: true,
+          transparent: true, opacity: 0.6,
+        })
       );
       wf.userData.xwf = true;
       c.add(wf);
