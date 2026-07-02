@@ -219,12 +219,9 @@ function init() {
       if (!c.isMesh) return;
       cachedMeshes.push(c);
       c.frustumCulled = false;
-      const mat = new THREE.MeshPhongMaterial({
+      const mat = new THREE.MeshBasicMaterial({
         color: 0xc8956a,
-        specular: 0x221510,
-        shininess: 15,
         side: THREE.DoubleSide,
-        skinning: true,
       });
       c.material = mat;
       origMats.set(c.uuid, mat.clone());
