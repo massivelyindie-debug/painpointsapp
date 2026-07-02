@@ -224,11 +224,24 @@ function init() {
 
     scene.add(model);
 
-    // Build skeleton helper — shows actual bone positions as lines
-    skeletonHelper = new THREE.SkeletonHelper(model);
-    skeletonHelper.material.linewidth = 2;
-    skeletonHelper.visible = false;
-    scene.add(skeletonHelper);
+    // Build skeleton helpers from each skinned mesh
+    const skinnedMeshes = cachedMeshes.filter(c => c.isSkinnedMesh);
+    console.log('Skinned meshes:', skinnedMeshes.length);
+    if (skinnedMeshes.length > 0) {
+      // Use the first skinned mesh's skeleton root
+      skeletonHelper = new THREE.SkeletonHelper(skinnedMeshes[0]);
+      skeletonHelper.material.linewidth = 3;
+      skeletonHelper.material.color = new THREE.Color(0x00ffff);
+      skeletonHelper.visible = false;
+      scene.add(skeletonHelper);
+      console.log('SkeletonHelper bones:', skeletonHelper.bones?.length);
+    } else {
+      // Fallback — try on root model
+      skeletonHelper = new THREE.SkeletonHelper(model);
+      skeletonHelper.material.linewidth = 3;
+      skeletonHelper.visible = false;
+      scene.add(skeletonHelper);
+    }
 
     camera.position.set(0, 1.0, 3.5);
     camera.lookAt(0, 1.0, 0);
