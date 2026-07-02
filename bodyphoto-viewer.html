@@ -192,36 +192,31 @@ function init() {
   orbitCtrl = buildOrbit(camera, renderer.domElement);
   orbitCtrl.target.set(0, 1, 0);
 
+  let skeletonHelper = null;
+
   // Load
   const loader = new THREE.GLTFLoader();
   loader.load(MODEL_URL, gltf => {
     model = gltf.scene;
 
-    // Get raw bounds BEFORE any scaling
     const rawBox = new THREE.Box3().setFromObject(model);
     const rawSize = rawBox.getSize(new THREE.Vector3());
     const rawCenter = rawBox.getCenter(new THREE.Vector3());
-    console.log('Raw size:', rawSize.x.toFixed(4), rawSize.y.toFixed(4), rawSize.z.toFixed(4));
 
-    // Scale so model is exactly 2 units tall
     const scale = 2.0 / rawSize.y;
     model.scale.setScalar(scale);
-
-    // Position: center X/Z, bottom at Y=0
     model.position.set(
       -rawCenter.x * scale,
       -rawBox.min.y * scale,
       -rawCenter.z * scale
     );
 
-    // Cache meshes and apply skin material
     model.traverse(c => {
       if (!c.isMesh) return;
       cachedMeshes.push(c);
       c.frustumCulled = false;
       const mat = new THREE.MeshBasicMaterial({
-        color: 0xc8956a,
-        side: THREE.DoubleSide,
+        color: 0xc8956a, side: THREE.DoubleSide,
       });
       c.material = mat;
       origMats.set(c.uuid, mat.clone());
@@ -229,7 +224,12 @@ function init() {
 
     scene.add(model);
 
-    // Camera: model is 2 units tall, centered at x=0, sits at y=0..2
+    // Build skeleton helper — shows actual bone positions as lines
+    skeletonHelper = new THREE.SkeletonHelper(model);
+    skeletonHelper.material.linewidth = 2;
+    skeletonHelper.visible = false;
+    scene.add(skeletonHelper);
+
     camera.position.set(0, 1.0, 3.5);
     camera.lookAt(0, 1.0, 0);
     orbitCtrl.target.set(0, 1.0, 0);
@@ -267,31 +267,25 @@ function init() {
 function toggleXray() {
   xrayOn = !xrayOn;
   document.getElementById('xrayBtn').classList.toggle('active', xrayOn);
-  cachedMeshes.forEach(c => {
-    // Remove old xray meshes
-    const toRemove = c.children.filter(ch => ch.userData.xwf);
-    toRemove.forEach(ch => c.remove(ch));
 
-    if (xrayOn) {
-      // Semi-transparent skin
+  if (xrayOn) {
+    // Fade skin to near-invisible
+    cachedMeshes.forEach(c => {
       c.material = new THREE.MeshBasicMaterial({
-        color: 0x88bbff, transparent: true, opacity: 0.08,
+        color: 0xaaccff, transparent: true, opacity: 0.06,
         side: THREE.DoubleSide, depthWrite: false,
       });
-      // Solid wireframe on top
-      const wf = new THREE.Mesh(c.geometry,
-        new THREE.MeshBasicMaterial({
-          color: 0x7ab3ff, wireframe: true,
-          transparent: true, opacity: 0.6,
-        })
-      );
-      wf.userData.xwf = true;
-      c.add(wf);
-    } else {
+    });
+    // Show skeleton lines
+    if (skeletonHelper) skeletonHelper.visible = true;
+  } else {
+    // Restore skin
+    cachedMeshes.forEach(c => {
       const orig = origMats.get(c.uuid);
       if (orig) c.material = orig.clone();
-    }
-  });
+    });
+    if (skeletonHelper) skeletonHelper.visible = false;
+  }
 }
 
 // ── RESET VIEW ─────────────────────────────────────────────────────
